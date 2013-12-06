@@ -1,0 +1,149 @@
+
+#include <memory>
+#include <vector>
+#include <sstream>
+
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDFilter.h"
+
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+
+#include "DataFormats/JetReco/interface/Jet.h"
+#include "AnalysisDataFormats/TopObjects/interface/CATopJetTagInfo.h"
+
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+#include "FWCore/Utilities/interface/InputTag.h"
+
+#include "DataFormats/Math/interface/deltaR.h"
+
+#include "DataFormats/Common/interface/View.h"
+#include "DataFormats/JetReco/interface/BasicJet.h"
+#include "DataFormats/JetReco/interface/CaloJet.h"
+#include "DataFormats/Candidate/interface/CompositeCandidate.h"
+#include "PhysicsTools/CandUtils/interface/AddFourMomenta.h"
+#include "DataFormats/Candidate/interface/CandMatchMap.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include <Math/VectorUtil.h>
+#include <TH1.h>
+#include <TH2.h>
+#include <TTree.h>
+
+
+using std::cout;
+using std::endl;
+
+class MCTagger : public edm::EDProducer {
+  
+public:
+
+  MCTagger();
+  virtual ~MCTagger(){}
+
+  virtual int BeginJob();
+  virtual int produce(edm::Event const & event, edm::EventSetup & EventSetup);
+  virtual int EndJob(){};
+
+private:
+
+  float                     BoostedTop;
+  edm::InputTag             genParticles_it;
+  std::vector<reco::Vertex> goodPVs;
+
+  int findMatch(const reco::GenParticleCollection & genParticles, int idToMatch, double eta, double phi);
+  double mdeltaR(double eta1, double phi1, double eta2, double phi2);
+};
+
+MCTagger::MCTagger(){
+
+  produces<std::vector<reco::GenJet> >();
+
+}
+int MCTagger::BeginJob(){
+  
+  if (mPset.exists("pvCollection")) pvCollection_it = mPset.getParameter<edm::InputTag>("pvCollection");
+  else                              pvCollection_it = edm::InputTag("goodOfflinePrimaryVertices");
+  
+  if (mPset.exists("genParticles")) genParticles_it = mPset.getParameter<edm::InputTag>("genParticles");
+  else                              genParticles_it = edm::InputTag("prunedGenParticles");
+  
+  if (mPset.exists("RecParticles")) genParticles_it = mPset.getParameter<edm::InputTag>("RecParticles");
+
+  
+  return 0;
+}
+
+int MCTagger::produce(edm::Event const & iEvent, edm::EventSetup const & iEventSetup){
+  //read in particle source
+  edm::Handle<reco::GenParticleCollection> genParticles;
+  event.getByLabel(genParticles_it, genParticles);
+  
+  //make collection to produce
+  std::auto_ptr< std::vector<reco::GenParticleCollection> > JetColl( new std::vector<reco::GenParticleCollection> (*genParticles));
+
+
+  //First, check to see if the event has a boostedtop event, which is defined by the daughters having a deltaR<=0.8 (which is the size of our 
+  //jet algorithm
+
+  for(size_t i = 0; i< genParticles->size(),i++){
+    
+    const reco::GenParticle & p = (*genParticles).at(i);
+    BoostedTop=0.0;
+    int id = p.pdgID();
+    //only use status 3 particles
+    if(p.status==3){
+      reco::Candidate* mother = (reco::Candidate*) p.mother();
+      if(not mother) continue;
+      int Mid = mother->pdgID();
+      //make sure the decay is from a top (anti-top)
+      if(abs(Mid)==8 ){
+	//now make sure the top decays only into W+/- and b(bbar)
+	if(p.numberOfDaughters()==2 && abs( (p.daughter(0))->pdgID() + (p.daughter(1))->pdgID())==31){
+	  //now I want to check the deltaR between the two daughters, it should be less than 0.8 for the jet to be boosted for our definition
+	  double daughtDeltaR = mdeltaR( (p.daughter(0))->eta(), (p.daughter(0))->phi(), (p.daughter(1))->eta(),(p.daughter(1))->phi());
+	  if(daughtDeltaR<=0.8){
+	    BoostedTop = 1.0;
+	  }
+	}
+
+      }
+    }
+    //now add the variable for whether or not it's a boosted top
+    p.addUserFloat("IsBoostedTop", BoostedTop);
+ }
+  //now add the collection to the event
+  iEvent.put(JetColl);
+
+}
+
+
+int MCTagger::findMatch(const reco::GenParticleCollection & genParticles, int idToMatch, double eta, double phi){
+      
+  float dRtmp = 1000;
+  float closestDR = 10000.;
+  int closestGenPart = -1;
+  
+  for(size_t j = 0; j < genParticles.size(); ++ j) {
+    const reco::GenParticle & p = (genParticles).at(j);
+    dRtmp = mdeltaR( eta, phi, p.eta(), p.phi());
+    if ( dRtmp < closestDR && abs(p.pdgId()) == idToMatch){// && dRtmp < 0.3) {
+      closestDR = dRtmp;
+      closestGenPart = j;
+    }//end of requirement for matching
+  }//end of gen particle loop 
+  return closestGenPart;
+}
+
+double MCTagger::mdeltaR(double eta1, double phi1, double eta2, double phi2) {
+  return std::sqrt( pow( eta1-eta2 , 2) + pow( phi1 -phi2 , 2) );
+}
+
+
+
+//define this as a plug-in
+DEFINE_FWK_MODULE(MCTagger);

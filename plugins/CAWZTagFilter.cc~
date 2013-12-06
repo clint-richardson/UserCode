@@ -1,0 +1,110 @@
+// -*- C++ -*-
+//
+// Package:    CAWZTagFilter
+// Class:      CAWZTagFilter
+// 
+/**\class CAWZTagFilter CAWZTagFilter.cc UserCode/CAWZTagFilter/plugins/CAWZTagFilter.cc
+
+ Description: [one line class summary]
+
+ Implementation:
+     [Notes on implementation]
+*/
+//
+// Original Author:  dylan rankin
+//         Created:  Wed, 17 Jul 2013 22:11:30 GMT
+// $Id$
+//
+//
+
+#include "CAWZTagFilter.h"
+
+using namespace std;
+using namespace reco;
+using namespace edm;
+
+//
+// constructors and destructor
+//
+CAWZTagFilter::CAWZTagFilter(const edm::ParameterSet& iConfig):
+  src_(iConfig.getParameter<InputTag>("src") )
+{
+  if ( iConfig.exists("minWMass") ) minWMass_ = iConfig.getParameter<double>("minWMass");
+  else minWMass_ = -1;
+  if ( iConfig.exists("maxWMass") ) maxWMass_ = iConfig.getParameter<double>("maxWMass");
+  else maxWMass_ = 999999;
+  if ( iConfig.exists("massdropcut") ) massdropcut_ = iConfig.getParameter<double>("massdropcut");
+  else massdropcut_ = 1;
+  if ( iConfig.exists("verbose") ) verbose_ = iConfig.getParameter<bool>("verbose");
+  else verbose_ = false;
+}
+
+
+CAWZTagFilter::~CAWZTagFilter()
+{
+}
+
+
+// ------------ method called to for each event  ------------
+bool CAWZTagFilter::filter( edm::Event& iEvent, const edm::EventSetup& iSetup)
+{
+
+  // Get the input list of basic jets corresponding to the hard jets
+  Handle<View<Jet> > pBasicJets;
+  iEvent.getByLabel(src_, pBasicJets);
+
+  // Get a convenient handle
+  View<Jet> const & hardJets = *pBasicJets;
+
+  CAWZJetHelperUser helper( massdropcut_ );
+  CATopJetProperties properties;
+
+  // Now loop over the hard jets and do kinematic cuts
+  View<Jet>::const_iterator ihardJet = hardJets.begin(),
+    ihardJetEnd = hardJets.end();
+  size_t iihardJet = 0;
+  bool pass = false;
+  for ( ; ihardJet != ihardJetEnd; ++ihardJet, ++iihardJet ) {
+
+    if (ihardJet->pt() < 150) continue;
+
+//     if ( verbose_ ) cout << "Processing ihardJet with pt = " << ihardJet->pt() << " , and mass = " << ihardJet->mass() << endl;
+
+    // Initialize output variables
+    // Get a ref to the hard jet
+    RefToBase<Jet> ref( pBasicJets, iihardJet );    
+    // Get properties
+    properties = helper( *ihardJet );
+
+    if (verbose_){
+      cout<<"Found high-pt jet while W-tagging"<<endl;
+      cout<<"nSubJets: "<<(properties.nSubJets)<<endl;
+      cout<<"Mass:     "<<(properties.wMass)<<endl;
+      cout<<endl;
+    }
+
+    if (properties.wMass < minWMass_ || properties.wMass > maxWMass_) continue;
+    else {
+      pass = true;
+      break;
+    }
+
+  }// end loop over hard jets
+
+  return pass;
+}
+// ------------ method called once each job just before starting event loop  ------------
+void 
+CAWZTagFilter::beginJob()
+{
+}
+
+// ------------ method called once each job just after ending the event loop  ------------
+void 
+CAWZTagFilter::endJob() {
+}
+
+ 
+
+//define this as a plug-in
+DEFINE_FWK_MODULE(CAWZTagFilter);
