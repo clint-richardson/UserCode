@@ -32,7 +32,7 @@
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
 #include "DataFormats/JetReco/interface/GenJet.h"
 #include <Math/VectorUtil.h>
-#include <TH1.h>
+#include "TH1F.h"
 #include <TH2.h>
 #include <TTree.h>
 
@@ -52,11 +52,12 @@ private:
   virtual void BeginJob();
   virtual void produce(edm::Event & event, const edm::EventSetup & EventSetup);
   virtual void EndJob(){};
+  TH1F* hist;
 
 
   edm::InputTag             genParticles_it;
-  edm::InputTag             pvCollection_it;
-  std::vector<reco::Vertex> goodPVs;
+  //  edm::InputTag             pvCollection_it;
+  //std::vector<reco::Vertex> goodPVs;
 
   int findMatch(const reco::GenParticleCollection & genParticles, int idToMatch, double eta, double phi);
   double mdeltaR(double eta1, double phi1, double eta2, double phi2);
@@ -64,14 +65,17 @@ private:
 
 MCTagger::MCTagger(const edm::ParameterSet& Pset){
   //load options
-  if (Pset.exists("pvCollection")) pvCollection_it = Pset.getParameter<edm::InputTag>("pvCollection");
-  else                              pvCollection_it = edm::InputTag("goodOfflinePrimaryVertices");
+  //  if (Pset.exists("pvCollection")) pvCollection_it = Pset.getParameter<edm::InputTag>("pvCollection");
+  // else                              pvCollection_it = edm::InputTag("goodOfflinePrimaryVertices");
   
   if (Pset.exists("genParticles")) genParticles_it = Pset.getParameter<edm::InputTag>("genParticles");
   else                              genParticles_it = edm::InputTag("prunedGenParticles");  
  
 
   produces<std::vector<int> >( "BoostedTop" ).setBranchAlias( "BoostedTop" );
+  //attempt to add histogram
+  edm::Service<TFileService> fs;
+  hist = fs->make<TH1F>("Tags", "tags", 4, 0 , 2);
 
 }
 void MCTagger::BeginJob(){ 
@@ -87,31 +91,41 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
   //make collection to run over
   std::auto_ptr<reco::GenParticleCollection > GenColl( new reco::GenParticleCollection (*genParticles));
   //make vector of ints to add to event
-  std::auto_ptr<std::vector<int> > BTop;
+  std::auto_ptr<std::vector<int> > BTop( new std::vector<int> );
+
+
 
   //First, check to see if the event has a boostedtop event, which is defined by the daughters having a deltaR<=0.8 (which is the size of our 
   //jet algorithm
 
   for(size_t i = 0; i < GenColl->size();i++){
-    
+
     const reco::GenParticle & p = (*GenColl)[i];
-    //    int id = p.pdgId();
+    int id = p.pdgId();
     //only use status 3 particles
     if(p.status()==3){
-      reco::Candidate* mother = (reco::Candidate*) p.mother();
-      if(not mother) continue;
-      int Mid = mother->pdgId();
+      //reco::Candidate* mother = (reco::Candidate*) p.mother();
+      //if(not mother) continue;
+      // int Mid = mother->pdgId();
       //make sure the decay is from a top (anti-top)
-      if(abs(Mid)==8 ){
+      if(abs(id)==6 ){
 	//now make sure the top decays only into W+/- and b(bbar)
-	if(mother->numberOfDaughters()==2 && abs( (mother->daughter(0))->pdgId() + (mother->daughter(1))->pdgId())==31){
+	if(p.numberOfDaughters()==2 && (abs( (p.daughter(0))->pdgId() + (p.daughter(1))->pdgId())==29)){
 	  //now I want to check the deltaR between the two daughters, it should be less than 0.8 for the jet to be boosted for our definition
-	  double daughtDeltaR = mdeltaR( (mother->daughter(0))->eta(), (mother->daughter(0))->phi(), (mother->daughter(1))->eta(),(mother->daughter(1))->phi());
+	  double daughtDeltaR = mdeltaR( (p.daughter(0))->eta(), (p.daughter(0))->phi(), (p.daughter(1))->eta(),(p.daughter(1))->phi());
 	  if(daughtDeltaR<=0.8){
 	    BTop->push_back(1);
+	    hist->Fill(1.0);
+	    cout<<"should get 1"<<endl;
 	  }
 	  else{
 	    BTop->push_back(0);
+	    hist->Fill(0.0);
+	  }
+	}
+	else{
+	  for(unsigned int j=0;j<p.numberOfDaughters();j++){
+	    cout<<"Daughter "<<j<<"'s id is "<<p.daughter(j)->pdgId()<<endl;
 	  }
 	}
 
@@ -121,6 +135,7 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
  }
   //now add the collection to the event
   iEvent.put( BTop, "BoostedTop");
+
 
 
 }
