@@ -97,7 +97,7 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
 
   //First, check to see if the event has a boostedtop event, which is defined by the daughters having a deltaR<=0.8 (which is the size of our 
   //jet algorithm
-
+  int count = 0;
   for(size_t i = 0; i < GenColl->size();i++){
 
     const reco::GenParticle & p = (*GenColl)[i];
@@ -110,13 +110,20 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
       //make sure the decay is from a top (anti-top)
       if(abs(id)==6 ){
 	//now make sure the top decays only into W+/- and b(bbar)
-	if(p.numberOfDaughters()==2 && (abs( (p.daughter(0))->pdgId() + (p.daughter(1))->pdgId())==29)){
+	if((abs( (p.daughter(0))->pdgId() + (p.daughter(1))->pdgId())==29)){
 	  //now I want to check the deltaR between the two daughters, it should be less than 0.8 for the jet to be boosted for our definition
 	  double daughtDeltaR = mdeltaR( (p.daughter(0))->eta(), (p.daughter(0))->phi(), (p.daughter(1))->eta(),(p.daughter(1))->phi());
 	  if(daughtDeltaR<=0.8){
 	    BTop->push_back(1);
 	    hist->Fill(1.0);
-	    cout<<"should get 1"<<endl;
+	    for(unsigned int j=0;j<p.numberOfDaughters();j++){
+	      if(abs(p.daughter(j)->pdgId())==24){
+		if(abs(((p.daughter(j))->daughter(0))->pdgId())<11){
+		  count = count+1;
+		}
+	      }
+	    }
+	    //cout<<"should get 1"<<endl;
 	  }
 	  else{
 	    BTop->push_back(0);
@@ -125,7 +132,7 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
 	}
 	else{
 	  for(unsigned int j=0;j<p.numberOfDaughters();j++){
-	    cout<<"Daughter "<<j<<"'s id is "<<p.daughter(j)->pdgId()<<endl;
+	    //	    cout<<"Daughter "<<j<<"'s id is "<<p.daughter(j)->pdgId()<<endl;
 	  }
 	}
 
@@ -136,7 +143,7 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
   //now add the collection to the event
   iEvent.put( BTop, "BoostedTop");
 
-
+  cout<<"Number of boosted jets is: "<<count<<endl;
 
 }
 
