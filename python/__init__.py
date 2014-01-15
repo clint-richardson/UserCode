@@ -1,3 +1,3 @@
 #Automatically created by SCRAM
 import os
-__path__.append(os.path.dirname(os.path.abspath(__file__).rsplit('/UserCode/CATopTagFilter/',1)[0])+'/cfipython/slc5_amd64_gcc472/UserCode/CATopTagFilter')
+__path__.append(os.path.dirname(os.path.abspath(__file__).rsplit('/UserCode/TopTagMCMatcher/',1)[0])+'/cfipython/slc5_amd64_gcc462/UserCode/TopTagMCMatcher')

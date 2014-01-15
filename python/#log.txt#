@@ -1,0 +1,40 @@
+globaltag = PRE_ST62_V8::All
+271 DQMStore::DQMStore 
+20-Dec-2013 13:08:02 CST  Initiating request to open file file:/uscms_data/d2/avetisya/HLT/CMSSW_6_2_0_pre7/src/reco_DIGI_L1_DIGI2RAW.root
+20-Dec-2013 13:08:02 CST  Initiating request to open file file:/uscms_data/d2/avetisya/HLT/CMSSW_6_2_0_pre7/src/reco_DIGI_L1_DIGI2RAW.root
+20-Dec-2013 13:08:02 CST  Successfully opened file file:/uscms_data/d2/avetisya/HLT/CMSSW_6_2_0_pre7/src/reco_DIGI_L1_DIGI2RAW.root
+20-Dec-2013 13:08:02 CST  Successfully opened file file:/uscms_data/d2/avetisya/HLT/CMSSW_6_2_0_pre7/src/reco_DIGI_L1_DIGI2RAW.root
+20-Dec-2013 13:08:11 CST  Closed file file:/uscms_data/d2/avetisya/HLT/CMSSW_6_2_0_pre7/src/reco_DIGI_L1_DIGI2RAW.root
+20-Dec-2013 13:08:11 CST  Closed file file:/uscms_data/d2/avetisya/HLT/CMSSW_6_2_0_pre7/src/reco_DIGI_L1_DIGI2RAW.root
+----- Begin Fatal Exception 20-Dec-2013 13:08:11 CST-----------------------
+An exception of category 'Configuration' occurred while
+   [0] Constructing the EventProcessor
+   [1] Constructing module: class=PoolOutputModule label='hltOutputA'
+Exception Message:
+Invalid statement in configuration file
+In OutputModule parameter named 'outputCommands'
+In each rule, after 'keep ' or 'drop ' there must
+be a branch specification of the form 'type_label_instance_process'
+There must be 4 fields separated by underscores
+The fields can only contain alphanumeric characters and the wildcards * or ?
+Alternately, a single * is also allowed for the branch specification
+This is the invalid output configuration rule:
+    keep *genParticles_*_*
+Exception thrown from ProductSelectorRules::Rule
+----- End Fatal Exception -------------------------------------------------
+----- Begin Fatal Exception 20-Dec-2013 13:08:11 CST-----------------------
+An exception of category 'Configuration' occurred while
+   [0] Constructing the EventProcessor
+   [1] Constructing module: class=PoolOutputModule label='hltOutputA'
+Exception Message:
+Invalid statement in configuration file
+In OutputModule parameter named 'outputCommands'
+In each rule, after 'keep ' or 'drop ' there must
+be a branch specification of the form 'type_label_instance_process'
+There must be 4 fields separated by underscores
+The fields can only contain alphanumeric characters and the wildcards * or ?
+Alternately, a single * is also allowed for the branch specification
+This is the invalid output configuration rule:
+    keep *genParticles_*_*
+Exception thrown from ProductSelectorRules::Rule
+----- End Fatal Exception -------------------------------------------------

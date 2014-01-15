@@ -1,0 +1,8 @@
+qType                               Module                   Label     Process      
+-----------------------------------------------------------------------------------
+edm::TriggerResults                "TriggerResults"         ""        "SIM"        
+FEDRawDataCollection               "rawDataCollector"       ""        "DIGI2RAW"   
+edm::TriggerResults                "TriggerResults"         ""        "DIGI2RAW"   
+L1GlobalTriggerObjectMapRecord     "hltL1GtObjectMap"       ""        "HLTX"       
+edm::TriggerResults                "TriggerResults"         ""        "HLTX"       
+trigger::TriggerEvent              "hltTriggerSummaryAOD"   ""        "HLTX"       
