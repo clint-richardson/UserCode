@@ -132,7 +132,7 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
 	}
 	else{
 	  for(unsigned int j=0;j<p.numberOfDaughters();j++){
-	    //	    cout<<"Daughter "<<j<<"'s id is "<<p.daughter(j)->pdgId()<<endl;
+	    cout<<"Daughter "<<j<<"'s id is "<<p.daughter(j)->pdgId()<<endl;
 	  }
 	}
 

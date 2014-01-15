@@ -9,8 +9,6 @@
 <use name="DataFormats/Math"/>
 <use name="DataFormats/PatCandidates"/>
 <use name="PhysicsTools/HepMCCandAlgos"/>
-<use name="PhysicsTools/UtilAlgos"/>
-<use name="FWCore/ServiceRegistry"/>
 <use name="TopQuarkAnalysis/TopTools"/>
 <use name="fastjet"/>
 <use name="ktjet"/>

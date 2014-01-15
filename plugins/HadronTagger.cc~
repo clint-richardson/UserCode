@@ -1,0 +1,92 @@
+#include <vector>
+#include <iostream>
+#include <cmath>
+#include <sstream>
+// user include files
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDFilter.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
+#include "DataFormats/Math/interface/deltaR.h"
+#include "../interface/HadronTagger.h"
+
+
+//
+// constants, enums and typedefs
+//
+
+//
+// static data member definitions
+//
+using namespace edm;
+using namespace reco;
+using namespace std;
+
+//
+// constructors and destructor
+//
+
+HadronTagger::HadronTagger(const edm::ParameterSet& iConfig) : 
+  label_(iConfig.getUntrackedParameter("moduleLabel",std::string("genParticles"))),
+  
+{
+}
+
+
+HadronTagger::~HadronTagger()
+{
+ 
+   // do anything here that needs to be done at desctruction time
+   // (e.g. close files, deallocate resources etc.)
+
+}
+
+
+//
+// member functions
+//
+
+// ------------ method called on each new Event  ------------
+bool
+HadronTagger::filter(edm::Event& iEvent, const edm::EventSetup& iSetup)
+{
+
+  bool accept=false;
+
+  bool tWb = false;
+  bool tbarWb = false;
+
+  Handle<reco::GenParticleCollection> genParticles ;
+  iEvent.getByLabel( label_, genParticles ) ;
+
+  for ( size_t i= 0;i< genParticles->size(); ++i ) {
+
+    const GenParticle & p = (*genParticles)[i];
+
+    int pdgID = p.pdgId();
+    
+    int status = p.status();
+
+    if(abs(pdgID)==6 && status==3){
+
+      if((abs( (p.daughter(0))->pdgId() + (p.daughter(1))->pdgId())==29)){
+
+
+	for(unsigned int j=0;j<p.numberOfDaughters();j++){
+	  if(abs(p.daughter(j)->pdgId())==24){
+	    if(abs(((p.daughter(j))->daughter(0))->pdgId())<11){
+	      accept = true;
+	    }
+	  }
+
+	}
+      }
+    }
+  }
+  return accept;
+}
+
+DEFINE_FWK_MODULE(HadronTagger);
