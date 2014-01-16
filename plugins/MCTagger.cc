@@ -54,7 +54,7 @@ private:
   virtual void EndJob(){};
   TH1F* hist;
   TH1F* passhist;
-
+  TH1F* njethist; 
 
   edm::InputTag             genParticles_it;
   //  edm::InputTag             pvCollection_it;
@@ -78,7 +78,7 @@ MCTagger::MCTagger(const edm::ParameterSet& Pset){
   edm::Service<TFileService> fs;
   hist = fs->make<TH1F>("Tags", "tags", 4, 0 , 2);
   passhist = fs->make<TH1F>("Passes", "passes", 3, 0 , 2);
-
+  njethist = fs->make<TH1F>("NJets", "njets", 6, 0,3);
 }
 void MCTagger::BeginJob(){ 
 
@@ -150,17 +150,11 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
 	  //double daughtDeltaR = mdeltaR( (p.daughter(0))->eta(), (p.daughter(0))->phi(), (p.daughter(1))->eta(),(p.daughter(1))->phi());
 	  if(maxdR<=0.8 && hadron && PT >280.0){
 	    BTop->push_back(1);
-	    for(unsigned int j=0;j<p.numberOfDaughters();j++){
-	      if(abs(p.daughter(j)->pdgId())==24){
-		if(abs(((p.daughter(j))->daughter(0))->pdgId())<11){
-		  count = count+1;
-                  if(!topchk) {
-                    topchk = true;
-                  }
-                  
-		}
-	      }
-	    }
+	    count = count+1;
+	    hist->Fill(1.0);
+	    
+	    topchk = true;
+
 	    cout<<"max delta R = "<<maxdR<<" and top pt is "<<PT<<endl;
 	  }
 	  else{
@@ -182,7 +176,7 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
   iEvent.put( BTop, "BoostedTop");
 
   cout<<"Number of boosted jets is: "<<count<<endl;
-
+  njethist->Fill(count);
   if (topchk) {
     passhist->Fill(1.0);
   }
