@@ -55,6 +55,8 @@ private:
   TH1F* hist;
   TH1F* passhist;
   TH1F* njethist; 
+  TH1F* dRhist;
+  TH1F* pthist;
 
   edm::InputTag             genParticles_it;
   //  edm::InputTag             pvCollection_it;
@@ -79,6 +81,8 @@ MCTagger::MCTagger(const edm::ParameterSet& Pset){
   hist = fs->make<TH1F>("Tags", "tags", 4, 0 , 2);
   passhist = fs->make<TH1F>("Passes", "passes", 3, 0 , 2);
   njethist = fs->make<TH1F>("NJets", "njets", 6, 0,3);
+  dRhist = fs->make<TH1F>("MaxDeltaR","maxdeltaR",200,0,10);
+  pthist = fs->make<TH1F>("PT","pthist",200,0,2000);
 }
 void MCTagger::BeginJob(){ 
 
@@ -113,6 +117,7 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
       //make sure the decay is from a top (anti-top)
       if(abs(id)==6 ){
 	float PT = p.pt();
+	pthist->Fill(PT);
 	//now make sure the top decays only into W+/- and b(bbar)
 	if((abs( (p.daughter(0))->pdgId() + (p.daughter(1))->pdgId())==29)){
 	  //now I want to check the deltaR between the three daughter quarks, so first for check that the W decays hadronically
@@ -145,7 +150,8 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
 	  if(dr1>dr2 && dr1>dr3) maxdR = dr1;
 	  if(dr2>dr1 && dr2>dr3) maxdR = dr2;
 	  if(dr3>dr2 && dr3>dr1) maxdR = dr3;
-			 
+	  if(hadron) dRhist->Fill(maxdR);
+	  
 
 	  //double daughtDeltaR = mdeltaR( (p.daughter(0))->eta(), (p.daughter(0))->phi(), (p.daughter(1))->eta(),(p.daughter(1))->phi());
 	  if(maxdR<=0.8 && hadron && PT >280.0){
