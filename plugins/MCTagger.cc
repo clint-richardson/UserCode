@@ -109,6 +109,7 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
       // int Mid = mother->pdgId();
       //make sure the decay is from a top (anti-top)
       if(abs(id)==6 ){
+	float PT = p.pt();
 	//now make sure the top decays only into W+/- and b(bbar)
 	if((abs( (p.daughter(0))->pdgId() + (p.daughter(1))->pdgId())==29)){
 	  //now I want to check the deltaR between the three daughter quarks, so first for check that the W decays hadronically
@@ -144,7 +145,7 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
 			 
 
 	  //double daughtDeltaR = mdeltaR( (p.daughter(0))->eta(), (p.daughter(0))->phi(), (p.daughter(1))->eta(),(p.daughter(1))->phi());
-	  if(maxdR<=0.8 && hadron){
+	  if(maxdR<=0.8 && hadron && PT >280.0){
 	    BTop->push_back(1);
 	    hist->Fill(1.0);
 	    for(unsigned int j=0;j<p.numberOfDaughters();j++){
@@ -154,7 +155,7 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
 		}
 	      }
 	    }
-	    //cout<<"should get 1"<<endl;
+	    cout<<"max delta R = "<<maxdR<<" and top pt is "<<PT<<endl;
 	  }
 	  else{
 	    BTop->push_back(0);
