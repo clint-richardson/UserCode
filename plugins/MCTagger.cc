@@ -111,9 +111,40 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
       if(abs(id)==6 ){
 	//now make sure the top decays only into W+/- and b(bbar)
 	if((abs( (p.daughter(0))->pdgId() + (p.daughter(1))->pdgId())==29)){
-	  //now I want to check the deltaR between the two daughters, it should be less than 0.8 for the jet to be boosted for our definition
-	  double daughtDeltaR = mdeltaR( (p.daughter(0))->eta(), (p.daughter(0))->phi(), (p.daughter(1))->eta(),(p.daughter(1))->phi());
-	  if(daughtDeltaR<=0.8){
+	  //now I want to check the deltaR between the three daughter quarks, so first for check that the W decays hadronically
+	  // also will get index of w
+	  bool hadron = false;
+	  int wInd = -1;
+	  for(unsigned int j=0;j<p.numberOfDaughters();j++){
+	    if(abs(p.daughter(j)->pdgId())==24){
+	      wInd=j;
+	      if(abs(((p.daughter(j))->daughter(0))->pdgId())<11){
+		hadron = true;
+		}
+	    }
+	  }
+	  //then check for b quark index
+	  int bInd = -1;
+	  for(unsigned int j=0;j<p.numberOfDaughters();j++){
+	    if(abs(p.daughter(j)->pdgId())==5){
+	      bInd=j;
+	    }
+	  }
+	  //now get the pair-wise delta-R's of the three quarks
+	  float dr1 = mdeltaR( ((p.daughter(wInd))->daughter(0))->eta(), ((p.daughter(wInd))->daughter(0))->phi(), ((p.daughter(wInd))->daughter(1))->eta(), ((p.daughter(wInd))->daughter(1))->phi()); 
+
+	  float dr2 = mdeltaR( (p.daughter(bInd))->eta(), (p.daughter(wInd))->phi(), ((p.daughter(wInd))->daughter(1))->eta(), ((p.daughter(wInd))->daughter(1))->phi()); 
+	  
+	  float dr3 = mdeltaR( (p.daughter(bInd))->eta(), (p.daughter(wInd))->phi(), ((p.daughter(wInd))->daughter(0))->eta(), ((p.daughter(wInd))->daughter(0))->phi()); 
+	  //find the max delta r between the three quarks
+	  float maxdR = 0.0;
+	  if(dr1>dr2 && dr1>dr3) maxdR = dr1;
+	  if(dr2>dr1 && dr2>dr3) maxdR = dr2;
+	  if(dr3>dr2 && dr3>dr1) maxdR = dr3;
+			 
+
+	  //double daughtDeltaR = mdeltaR( (p.daughter(0))->eta(), (p.daughter(0))->phi(), (p.daughter(1))->eta(),(p.daughter(1))->phi());
+	  if(maxdR<=0.8 && hadron){
 	    BTop->push_back(1);
 	    hist->Fill(1.0);
 	    for(unsigned int j=0;j<p.numberOfDaughters();j++){
