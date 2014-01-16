@@ -53,6 +53,7 @@ private:
   virtual void produce(edm::Event & event, const edm::EventSetup & EventSetup);
   virtual void EndJob(){};
   TH1F* hist;
+  TH1F* passhist;
 
 
   edm::InputTag             genParticles_it;
@@ -76,6 +77,7 @@ MCTagger::MCTagger(const edm::ParameterSet& Pset){
   //attempt to add histogram
   edm::Service<TFileService> fs;
   hist = fs->make<TH1F>("Tags", "tags", 4, 0 , 2);
+  passhist = fs->make<TH1F>("Passes", "passes", 3, 0 , 2);
 
 }
 void MCTagger::BeginJob(){ 
@@ -97,6 +99,7 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
 
   //First, check to see if the event has a boostedtop event, which is defined by the daughters having a deltaR<=0.8 (which is the size of our 
   //jet algorithm
+  bool topchk = false;
   int count = 0;
   for(size_t i = 0; i < GenColl->size();i++){
 
@@ -147,11 +150,14 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
 	  //double daughtDeltaR = mdeltaR( (p.daughter(0))->eta(), (p.daughter(0))->phi(), (p.daughter(1))->eta(),(p.daughter(1))->phi());
 	  if(maxdR<=0.8 && hadron && PT >280.0){
 	    BTop->push_back(1);
-	    hist->Fill(1.0);
 	    for(unsigned int j=0;j<p.numberOfDaughters();j++){
 	      if(abs(p.daughter(j)->pdgId())==24){
 		if(abs(((p.daughter(j))->daughter(0))->pdgId())<11){
 		  count = count+1;
+                  if(!topchk) {
+                    topchk = true;
+                  }
+                  
 		}
 	      }
 	    }
@@ -176,6 +182,13 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
   iEvent.put( BTop, "BoostedTop");
 
   cout<<"Number of boosted jets is: "<<count<<endl;
+
+  if (topchk) {
+    passhist->Fill(1.0);
+  }
+  else {
+    passhist->Fill(0.0);
+  }
 
 }
 
