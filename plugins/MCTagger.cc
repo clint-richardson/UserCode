@@ -52,11 +52,15 @@ private:
   virtual void BeginJob();
   virtual void produce(edm::Event & event, const edm::EventSetup & EventSetup);
   virtual void EndJob(){};
-  TH1F* hist;
-  TH1F* passhist;
+  TH1F* tophist;
+  TH1F* toppasshist;
+  TH1F* Wpasshist;
+  TH1F* topetahist;
+  TH1F* Wetahist;
   TH1F* njethist; 
   TH1F* dRhist;
-  TH1F* pthist;
+  TH1F* toppthist;
+  TH1F* Wpthist;
 
   edm::InputTag             genParticles_it;
   //  edm::InputTag             pvCollection_it;
@@ -78,11 +82,15 @@ MCTagger::MCTagger(const edm::ParameterSet& Pset){
   produces<std::vector<int> >( "BoostedTop" ).setBranchAlias( "BoostedTop" );
   //attempt to add histogram
   edm::Service<TFileService> fs;
-  hist = fs->make<TH1F>("Tags", "tags", 4, 0 , 2);
-  passhist = fs->make<TH1F>("Passes", "passes", 3, 0 , 2);
+  tophist = fs->make<TH1F>("Top Tags", "top tags", 4, 0 , 2);
+  toppasshist = fs->make<TH1F>("Top Passes", "top passes", 3, 0 , 2);
+  Wpasshist = fs->make<TH1F>("W Passes", "w passes", 3, 0 , 2);
+  Wetahist = fs->make<TH1F>("W Eta", "w eta", 72, -6, 6);
+  topetahist = fs->make<TH1F>("Top Eta", "top eta", 72, -6, 6);
   njethist = fs->make<TH1F>("NJets", "njets", 6, 0,3);
   dRhist = fs->make<TH1F>("MaxDeltaR","maxdeltaR",200,0,10);
-  pthist = fs->make<TH1F>("PT","pthist",200,0,2000);
+  toppthist = fs->make<TH1F>("Top PT","top pt",200,0,2000);
+  Wpthist = fs->make<TH1F>("W PT","w pt",200,0,2000);
 }
 void MCTagger::BeginJob(){ 
 
@@ -104,20 +112,37 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
   //First, check to see if the event has a boostedtop event, which is defined by the daughters having a deltaR<=0.8 (which is the size of our 
   //jet algorithm
   bool topchk = false;
+  bool Wchk = false;
   int count = 0;
   for(size_t i = 0; i < GenColl->size();i++){
 
     const reco::GenParticle & p = (*GenColl)[i];
     int id = p.pdgId();
+
     //only use status 3 particles
     if(p.status()==3){
       //reco::Candidate* mother = (reco::Candidate*) p.mother();
       //if(not mother) continue;
       // int Mid = mother->pdgId();
+      float PT = p.pt();
+      float Eta = p.eta();
+
+      //check for W decays
+      if(abs(id)==24 && p.numberOfDaughters()==2 && (not (abs(p.mother()->pdgId())==6 && (p.mother())->status()==3))){
+      //if(abs(id)==24){
+        if(abs((p.daughter(0))->pdgId())<11 && abs((p.daughter(1))->pdgId())<11){
+          float dr1 = mdeltaR( (p.daughter(0))->eta(), (p.daughter(0))->phi(), (p.daughter(1))->eta(), (p.daughter(1))->phi()); 
+          //cout << "W deltaR = " << dr1 << std::endl;
+          if(dr1<=0.8 && PT>280.0 && Eta<2.5){
+            Wpthist->Fill(PT);
+            Wetahist->Fill(Eta);
+            Wchk = true;
+          }
+        }
+      }
+
       //make sure the decay is from a top (anti-top)
       if(abs(id)==6 ){
-	float PT = p.pt();
-	pthist->Fill(PT);
 	//now make sure the top decays only into W+/- and b(bbar)
 	if((abs( (p.daughter(0))->pdgId() + (p.daughter(1))->pdgId())==29)){
 	  //now I want to check the deltaR between the three daughter quarks, so first for check that the W decays hadronically
@@ -154,23 +179,32 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
 	  
 
 	  //double daughtDeltaR = mdeltaR( (p.daughter(0))->eta(), (p.daughter(0))->phi(), (p.daughter(1))->eta(),(p.daughter(1))->phi());
-	  if(maxdR<=0.8 && hadron && PT >280.0){
+	  if(maxdR<=0.8 && hadron && PT >280.0 && Eta<2.5){
 	    BTop->push_back(1);
 	    count = count+1;
-	    hist->Fill(1.0);
+	    tophist->Fill(1.0);
 	    
+	    toppthist->Fill(PT);
+            topetahist->Fill(Eta);
 	    topchk = true;
 
-	    cout<<"max delta R = "<<maxdR<<" and top pt is "<<PT<<endl;
+	    //cout<<"max delta R = "<<maxdR<<" and top pt is "<<PT<<endl;
 	  }
+          else if(dr1<=0.8 && hadron && (p.daughter(wInd))->eta()<2.5 && (p.daughter(wInd))->pt()>280){
+            Wpthist->Fill((p.daughter(wInd))->pt());
+            Wetahist->Fill((p.daughter(wInd))->eta());
+            Wchk = true;
+	    BTop->push_back(0);
+	    tophist->Fill(0.0);
+          }
 	  else{
 	    BTop->push_back(0);
-	    hist->Fill(0.0);
+	    tophist->Fill(0.0);
 	  }
 	}
 	else{
 	  for(unsigned int j=0;j<p.numberOfDaughters();j++){
-	    cout<<"Daughter "<<j<<"'s id is "<<p.daughter(j)->pdgId()<<endl;
+	    //cout<<"Daughter "<<j<<"'s id is "<<p.daughter(j)->pdgId()<<endl;
 	  }
 	}
 
@@ -181,13 +215,19 @@ void MCTagger::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
   //now add the collection to the event
   iEvent.put( BTop, "BoostedTop");
 
-  cout<<"Number of boosted jets is: "<<count<<endl;
+  //cout<<"Number of boosted jets is: "<<count<<endl;
   njethist->Fill(count);
   if (topchk) {
-    passhist->Fill(1.0);
+    toppasshist->Fill(1.0);
   }
   else {
-    passhist->Fill(0.0);
+    toppasshist->Fill(0.0);
+  }
+  if (Wchk) {
+    Wpasshist->Fill(1.0);
+  }
+  else {
+    Wpasshist->Fill(0.0);
   }
 
 }
