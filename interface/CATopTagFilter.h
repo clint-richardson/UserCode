@@ -32,7 +32,9 @@
 #include "DataFormats/Candidate/interface/CompositeCandidate.h"
 #include "PhysicsTools/CandUtils/interface/AddFourMomenta.h"
 #include "DataFormats/Candidate/interface/CandMatchMap.h"
-
+#include "DataFormats/HLTReco/interface/TriggerTypeDefs.h"
+#include "HLTrigger/HLTcore/interface/HLTFilter.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include <Math/VectorUtil.h>
 #include <TH1.h>
 #include <TH2.h>
@@ -67,20 +69,20 @@ struct GreaterByPtCandPtrUser {
 // class decleration
 //
 
-class CATopTagFilter : public edm::EDFilter {
+class CATopTagFilter : public HLTFilter {
  public:
   explicit CATopTagFilter(const edm::ParameterSet&);
   ~CATopTagFilter();
-
+  virtual bool hltFilter( edm::Event&, const edm::EventSetup&, trigger::TriggerFilterObjectWithRefs & filterobject) const override;
 
  private:
   virtual void beginJob() ;
-  virtual bool filter( edm::Event&, const edm::EventSetup&);
   virtual void endJob() ;
 
   // ----------member data ---------------------------
 
   edm::InputTag   src_;
+  edm::InputTag   FilterTag_;
 
   double      TopMass_;
   double      minTopMass_;
