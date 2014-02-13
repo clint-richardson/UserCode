@@ -17,7 +17,7 @@
 //
 //
 
-#include "CATopTagFilter.h"
+#include "../interface/CATopTagFilter.h"
 
 using namespace std;
 using namespace reco;
