@@ -27,18 +27,29 @@ using namespace edm;
 // constructors and destructor
 //
 CATopTagFilter::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(iConfig),
-								   src_ (iConfig.getParameter<InputTag>("src")),
-								   FilterTag_ (iConfig.getParameter<InputTag>("FilterTag")),
-								   TopMass_ (iConfig.getParameter<double>("TopMass")),
-								   minTopMass_ (iConfig.getParameter<double>("minTopMass")),
-								   maxTopMass_ (iConfig.getParameter<double>("maxTopMass")),
-								   WMass_ (iConfig.getParameter<double>("WMass")),
-								   minWMass_ (iConfig.getParameter<double>("minWMass")),
-								   maxWMass_ (iConfig.getParameter<double>("maxWMass")),
-								   minMinMass_ (iConfig.getParameter<double>("minMinMass")),
-								   maxMinMass_ (iConfig.getParameter<double>("maxMinMass")),
-								   verbose_ (iConfig.getParameter<bool>("verbose"))
-{}
+								   src_(iConfig.getParameter<InputTag>("src")),
+								   inputTag_(iConfig.getParameter<InputTag>("inputTag"))
+{
+
+  if ( iConfig.exists("TopMass") ) TopMass_ = iConfig.getParameter<double>("TopMass");
+  else TopMass_ = 171.;
+  if ( iConfig.exists("minTopMass") ) minTopMass_ = iConfig.getParameter<double>("minTopMass");
+  else minTopMass_ = -1;
+  if ( iConfig.exists("maxTopMass") ) maxTopMass_ = iConfig.getParameter<double>("maxTopMass");
+  else maxTopMass_ = 999999;
+  if ( iConfig.exists("WMass") ) WMass_ = iConfig.getParameter<double>("WMass");
+  else WMass_ = 80.4;
+  if ( iConfig.exists("minWMass") ) minWMass_ = iConfig.getParameter<double>("minWMass");
+  else minWMass_ = -1;
+  if ( iConfig.exists("maxWMass") ) maxWMass_ = iConfig.getParameter<double>("maxWMass");
+  else maxWMass_ = 999999;
+  if ( iConfig.exists("minMinMass") ) minMinMass_ = iConfig.getParameter<double>("minMinMass");
+  else minMinMass_ = -1;
+  if ( iConfig.exists("maxMinMass") ) maxMinMass_ = iConfig.getParameter<double>("maxMinMass");
+  else maxMinMass_ = 999999;
+  if ( iConfig.exists("verbose") ) verbose_ = iConfig.getParameter<bool>("verbose");
+  else verbose_ = false;
+}
 
 
 CATopTagFilter::~CATopTagFilter()
@@ -91,9 +102,8 @@ bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetu
       break;
     }
 
-    if(pass && saveTags()){
-      filterobject.addCollectionTag(FilterTag_);
-	}
+    filterobject.addCollectionTag(inputTag_);
+
 
   }// end loop over hard jets
 
