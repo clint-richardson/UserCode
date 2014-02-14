@@ -73,7 +73,7 @@ class CATopTagFilter : public HLTFilter {
  public:
   explicit CATopTagFilter(const edm::ParameterSet&);
   ~CATopTagFilter();
-  virtual bool hltFilter( edm::Event&, const edm::EventSetup&, trigger::TriggerFilterObjectWithRefs & filterobject) const override;
+  virtual bool hltFilter( edm::Event&, const edm::EventSetup&, trigger::TriggerFilterObjectWithRefs & filterobject) const;
 
  private:
   virtual void beginJob() ;
