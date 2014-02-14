@@ -47,7 +47,7 @@ CATopTagFilter::~CATopTagFilter()
 
 
 // ------------ method called to for each event  ------------
-bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup, trigger::TriggerFilterObjectWithRefs & filterobject) const
+bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup, trigger::TriggerFilterObjectWithRefs & filterobject)
 {
 
   // Get the input list of basic jets corresponding to the hard jets
