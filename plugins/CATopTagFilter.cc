@@ -26,11 +26,10 @@ using namespace edm;
 //
 // constructors and destructor
 //
-CATopTagFilter::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(iConfig),
-								   src_(iConfig.getParameter<InputTag>("src")),
-								   inputTag_(iConfig.getParameter<InputTag>("inputTag"))
-{
-
+CATopTagFilter::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(iConfig){
+  
+  src_ = iConfig.getParameter<edm::InputTag>("src");
+  inputTag_ = iConfig.getParameter<edm::InputTag>("inputTag");
   if ( iConfig.exists("TopMass") ) TopMass_ = iConfig.getParameter<double>("TopMass");
   else TopMass_ = 171.;
   if ( iConfig.exists("minTopMass") ) minTopMass_ = iConfig.getParameter<double>("minTopMass");
@@ -52,11 +51,21 @@ CATopTagFilter::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(iCo
 }
 
 
-CATopTagFilter::~CATopTagFilter()
-{
+CATopTagFilter::~CATopTagFilter(){}
+
+void CATopTagFilter::fillDescriptions(edm::ConfigurationDescriptions& descriptions){
+  edm::ParameterSetDescription desc;
+  makeHLTFilterDescription(desc);
+
+  desc.add<edm::InputTag>("inputTag",edm::InputTag("CA8TopTagFilter"));
+  desc.add<double>("maxTopMass",230.);
+  desc.add<double>("minMinMass",50.);
+  desc.add<double>("minTopMass",140.);
+  desc.add<edm::InputTag>("src",edm::InputTag("hltParticleFlow"));
+  desc.add<bool>("verbose",false);
+  desc.add<int>("triggerType",trigger::TriggerJet);
+  descriptions.add("hltCA8TopTagFilter",desc);
 }
-
-
 // ------------ method called to for each event  ------------
 bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup, trigger::TriggerFilterObjectWithRefs & filterobject)
 {
@@ -102,23 +111,17 @@ bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetu
       break;
     }
 
-    filterobject.addCollectionTag(inputTag_);
-
-
   }// end loop over hard jets
+
+
+  //add filter object
+  if(saveTags() && pass){
+    filterobject.addCollectionTag(src_);
+  }
 
   return pass;
 }
 // ------------ method called once each job just before starting event loop  ------------
-void 
-CATopTagFilter::beginJob()
-{
-}
-
-// ------------ method called once each job just after ending the event loop  ------------
-void 
-CATopTagFilter::endJob() {
-}
 
  
 
