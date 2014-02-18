@@ -35,6 +35,7 @@
 #include "DataFormats/HLTReco/interface/TriggerTypeDefs.h"
 #include "HLTrigger/HLTcore/interface/HLTFilter.h"
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include <Math/VectorUtil.h>
 #include <TH1.h>
 #include <TH2.h>
@@ -73,16 +74,14 @@ class CATopTagFilter : public HLTFilter {
  public:
   explicit CATopTagFilter(const edm::ParameterSet&);
   ~CATopTagFilter();
+  static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
   virtual bool hltFilter( edm::Event&, const edm::EventSetup&, trigger::TriggerFilterObjectWithRefs & filterobject);
 
  private:
-  virtual void beginJob() ;
-  virtual void endJob() ;
-
   // ----------member data ---------------------------
 
   edm::InputTag   src_;
-  edm::InputTag   FilterTag_;
+  edm::InputTag   inputTag_;
 
   double      TopMass_;
   double      minTopMass_;
