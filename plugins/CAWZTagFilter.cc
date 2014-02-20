@@ -17,7 +17,7 @@
 //
 //
 
-#include "CAWZTagFilter.h"
+#include "../interface/CAWZTagFilter.h"
 
 using namespace std;
 using namespace reco;
