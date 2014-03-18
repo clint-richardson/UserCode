@@ -81,7 +81,7 @@ class CATopTagFilter : public HLTFilter {
   // ----------member data ---------------------------
 
   edm::InputTag   src_;
-  edm::InputTag   inputTag_;
+  edm::InputTag   pfsrc_;
 
   double      TopMass_;
   double      minTopMass_;
