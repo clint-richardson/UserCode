@@ -29,7 +29,7 @@ using namespace edm;
 CATopTagFilter::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(iConfig){
   
   src_ = iConfig.getParameter<edm::InputTag>("src");
-  inputTag_ = iConfig.getParameter<edm::InputTag>("inputTag");
+  pfsrc_ = iConfig.getParameter<edm::InputTag>("pfsrc");
   if ( iConfig.exists("TopMass") ) TopMass_ = iConfig.getParameter<double>("TopMass");
   else TopMass_ = 171.;
   if ( iConfig.exists("minTopMass") ) minTopMass_ = iConfig.getParameter<double>("minTopMass");
@@ -56,12 +56,11 @@ CATopTagFilter::~CATopTagFilter(){}
 void CATopTagFilter::fillDescriptions(edm::ConfigurationDescriptions& descriptions){
   edm::ParameterSetDescription desc;
   makeHLTFilterDescription(desc);
-
-  desc.add<edm::InputTag>("inputTag",edm::InputTag("CA8TopTagFilter"));
   desc.add<double>("maxTopMass",230.);
   desc.add<double>("minMinMass",50.);
   desc.add<double>("minTopMass",140.);
   desc.add<edm::InputTag>("src",edm::InputTag("hltParticleFlow"));
+  desc.add<edm::InputTag>("pfsrc",edm::InputTag("selectedPFJets"));
   desc.add<bool>("verbose",false);
   desc.add<int>("triggerType",trigger::TriggerJet);
   descriptions.add("hltCA8TopTagFilter",desc);
@@ -70,32 +69,45 @@ void CATopTagFilter::fillDescriptions(edm::ConfigurationDescriptions& descriptio
 bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup, trigger::TriggerFilterObjectWithRefs & filterobject)
 {
 
+  
   // Get the input list of basic jets corresponding to the hard jets
-  Handle<View<Jet> > pBasicJets;
+  // Handle<reco::Jet > pBasicJets;
+  // iEvent.getByLabel(src_, pBasicJets);
+
+  //get basic jets
+  Handle<reco::BasicJetCollection > pBasicJets;
   iEvent.getByLabel(src_, pBasicJets);
 
+  //get corresponding pf jets
+  Handle<reco::PFJetCollection> pfJets;
+  iEvent.getByLabel(pfsrc_, pfJets);
+
+  //add filter object
+  if(saveTags()){
+    filterobject.addCollectionTag(pfsrc_);
+  }
+
+
   // Get a convenient handle
-  View<Jet> const & hardJets = *pBasicJets;
+  // reco:: const & hardJets = *pBasicJets;
 
   CATopJetHelperUser helper( TopMass_, WMass_ );
   CATopJetProperties properties;
 
   // Now loop over the hard jets and do kinematic cuts
-  View<Jet>::const_iterator ihardJet = hardJets.begin(),
-    ihardJetEnd = hardJets.end();
-  size_t iihardJet = 0;
+  reco::BasicJetCollection::const_iterator ihardJet = pBasicJets->begin(),
+    ihardJetEnd = pBasicJets->end();
+  reco::PFJetCollection::const_iterator ipfJet = pfJets->begin();
   bool pass = false;
-  for ( ; ihardJet != ihardJetEnd; ++ihardJet, ++iihardJet ) {
+  
+  for ( ; ihardJet != ihardJetEnd; ++ihardJet, ++ipfJet ) {
 
     if (ihardJet->pt() < 350) continue;
 
 //     if ( verbose_ ) cout << "Processing ihardJet with pt = " << ihardJet->pt() << endl;
 
-    // Initialize output variabless
-    // Get a ref to the hard jet
-    RefToBase<Jet> ref( pBasicJets, iihardJet );    
     // Get properties
-    properties = helper( *ihardJet );
+    properties = helper( (reco::Jet&) *ihardJet );
 
     if (verbose_){
       cout<<"Found high-pt jet while top-tagging;"<<endl;
@@ -107,6 +119,10 @@ bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetu
 
     if (properties.minMass < minMinMass_ || properties.minMass > maxMinMass_ || properties.wMass < minWMass_ || properties.wMass > maxWMass_ || properties.topMass < minTopMass_ || properties.topMass > maxTopMass_) continue;
     else {
+      // Get a ref to the hard jet
+      reco::PFJetRef ref = reco::PFJetRef(pfJets,distance(pfJets->begin(),ipfJet));
+      //add ref to event
+      filterobject.addObject(trigger::TriggerJet,ref);
       pass = true;
       break;
     }
@@ -114,10 +130,7 @@ bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetu
   }// end loop over hard jets
 
 
-  //add filter object
-  if(saveTags() && pass){
-    filterobject.addCollectionTag(src_);
-  }
+
 
   return pass;
 }
