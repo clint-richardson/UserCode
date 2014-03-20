@@ -79,13 +79,25 @@ void FilterTest::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
   edm::Handle<trigger::TriggerEvent> aodTriggerEvent;
   iEvent.getByLabel("hltTriggerSummaryAOD",aodTriggerEvent);
 
+
+  //get trigger objects
+  trigger::TriggerObjectCollection allObjects = aodTriggerEvent->getObjects();
+
+  //  for(int j=0; j<aodTriggerEvent->sizeFilters();j++){
+  //cout<<"filter is: "<<aodTriggerEvent->filterTag(j).label()<<endl;
+  //}
+
   //check to see if trigger was fired
   for(int j = 0; j<aodTriggerEvent->sizeFilters(); j++){
-    if(aodTriggerEvent->sizeFilters()>3){
-      cout<<"filter is: "<<aodTriggerEvent->filterTag(j).label()<<endl;
+    if(aodTriggerEvent->filterTag(j).label()!="hltCATopTagFilter") continue;
+    //get keys
+    trigger::Keys keys = aodTriggerEvent->filterKeys(j);
+    for(size_t n=0; n<keys.size();n++){
+      float pt = allObjects[keys[n]].pt();
+      cout<<"Transverse momentum is: "<<pt<<endl;
+      cout<<"Filter is: "<<aodTriggerEvent->filterTag(j).label()<<endl;
     }
   }
-
   /*
   //2nd attempt at accessing trigger results following strategy of HLTInfo.cc
   edm::Handle<edm::TriggerResults> hltresults;
