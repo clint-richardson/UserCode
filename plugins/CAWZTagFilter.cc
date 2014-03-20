@@ -48,9 +48,9 @@ CAWZTagFilter::~CAWZTagFilter()
 void CAWZTagFilter::fillDescriptions(edm::ConfigurationDescriptions& descriptions){
   edm::ParameterSetDescription desc;
   makeHLTFilterDescription(desc);
-  desc.add<double>("maxWMass",230.);
-  desc.add<double>("minWMass",140.);
-  desc.add<double>("massdropcut",230.);
+  desc.add<double>("maxWMass",130.);
+  desc.add<double>("minWMass",60.);
+  desc.add<double>("massdropcut",0.4);
   desc.add<edm::InputTag>("src",edm::InputTag("hltParticleFlow"));
   desc.add<edm::InputTag>("pfsrc",edm::InputTag("selectedPFJets"));
   desc.add<bool>("verbose",false);
