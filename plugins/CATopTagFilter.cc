@@ -87,10 +87,7 @@ bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetu
     filterobject.addCollectionTag(pfsrc_);
   }
 
-
-  // Get a convenient handle
-  // reco:: const & hardJets = *pBasicJets;
-
+  //initialize the properties
   CATopJetHelperUser helper( TopMass_, WMass_ );
   CATopJetProperties properties;
 
@@ -124,7 +121,6 @@ bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetu
       //add ref to event
       filterobject.addObject(trigger::TriggerJet,ref);
       pass = true;
-      break;
     }
 
   }// end loop over hard jets
