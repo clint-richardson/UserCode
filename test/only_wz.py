@@ -8502,16 +8502,31 @@ process.hltCambridgeAachen8PFJetsWZ = cms.EDProducer( "FastjetJetProducer",
     usePruning = cms.bool( True )
 )
 
+process.hltCA8WZPFJets = cms.EDProducer("BasicToPFJet",
+    src = cms.InputTag("hltCA8WZJets"),
+)
+
 process.hltCAWZTagFilter = cms.EDFilter("CAWZTagFilter",
     src = cms.InputTag("hltCA8WZJets"),
+    pfsrc = cms.InputTag("hltCA8WZPFJets"),
+    saveTags = cms.bool(True),
     minWMass = cms.double(60.),
     maxWMass = cms.double(130.),
     massdropcut = cms.double(0.4),
     verbose = cms.bool(False)
 )
 
+
+process.hltCA8WZPFJetsNew = cms.EDProducer("BasicToPFJet",
+    src = cms.InputTag("hltCA8WZJetsNew"),
+)
+
+
+
 process.hltCAWZTagFilterNew = cms.EDFilter("CAWZTagFilter",
     src = cms.InputTag("hltCA8WZJetsNew"),
+    pfsrc = cms.InputTag("hltCA8WZPFJetsNew"),
+    saveTags = cms.bool(True),
     minWMass = cms.double(60.),
     maxWMass = cms.double(130.),
     massdropcut = cms.double(0.4),
@@ -43182,8 +43197,8 @@ process.HLTriggerFirstPath = cms.Path( process.hltGetConditions + process.hltGet
 process.HLT_CA8PFJET320_v1 = cms.Path( process.HLTBeginSequence + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.HLTPFL1FastL2L3ReconstructionSequenceCA8bak + process.hltPFCA8JetsMatchedToCaloJets260Regionalbak + process.hlt1PFCA8Jet320bak + process.HLTEndSequence )
 
 #process.HLT_CA8PFJET320WZTag_v1 = cms.Path( process.HLTBeginSequence + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.HLTPFL1FastL2L3ReconstructionSequenceCA8WZ + process.hltPFCA8JetsMatchedToCaloJets260RegionalWZ + process.hlt1PFCA8Jet320WZ + process.HLTEndSequence )
-process.HLT_CA8PFJET320WZTag_v1 = cms.Path( process.HLTBeginSequence + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.hltCA8WZJets + process.hltCAWZTagFilter + process.HLTEndSequence )
-process.HLT_CA8PFJET320WZTagNew_v1 = cms.Path( process.HLTBeginSequence + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.hltCA8WZJetsNew + process.hltCAWZTagFilterNew + process.HLTEndSequence )
+process.HLT_CA8PFJET320WZTag_v1 = cms.Path( process.HLTBeginSequence + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.hltCA8WZJets + process.hltCA8WZPFJets + process.hltCAWZTagFilter + process.HLTEndSequence )
+process.HLT_CA8PFJET320WZTagNew_v1 = cms.Path( process.HLTBeginSequence + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.hltCA8WZJetsNew + process.hltCA8WZPFJetsNew + process.hltCAWZTagFilterNew + process.HLTEndSequence )
 
 process.HLTriggerFinalPath = cms.Path( process.hltGtDigis + process.hltScalersRawToDigi + process.hltFEDSelector + process.hltTriggerSummaryAOD + process.hltTriggerSummaryRAW )
 process.AOutput = cms.EndPath( process.hltPreAOutput + process.hltOutputA )
