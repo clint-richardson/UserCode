@@ -66,7 +66,6 @@ class CAWZTagFilter : public HLTFilter {
   double      minWMass_;
   double      maxWMass_;
   double      massdropcut_;
-  bool        verbose_;
 
 };
 
