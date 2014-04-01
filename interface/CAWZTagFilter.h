@@ -7,26 +7,10 @@
 #include <sstream>
 
 // user include files
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDFilter.h"
-
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-
-#include "DataFormats/JetReco/interface/Jet.h"
 #include "AnalysisDataFormats/TopObjects/interface/CATopJetTagInfo.h"
-
-
-// user include files
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "FWCore/Utilities/interface/InputTag.h"
-
-#include "DataFormats/Math/interface/deltaR.h"
-
-#include "DataFormats/Common/interface/View.h"
 #include "DataFormats/JetReco/interface/BasicJet.h"
 #include "DataFormats/JetReco/interface/CaloJet.h"
 #include "DataFormats/Candidate/interface/CompositeCandidate.h"
@@ -37,9 +21,6 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include <Math/VectorUtil.h>
-#include <TH1.h>
-#include <TH2.h>
-#include <TTree.h>
 
 class CAWZJetHelperUser : public std::unary_function<reco::Jet, reco::CATopJetProperties> {
  public:
