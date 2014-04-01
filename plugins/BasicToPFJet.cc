@@ -1,10 +1,10 @@
 #include "../interface/BasicToPFJet.h"
 
-BasicToPFJet::BasicToPFJet(const edm::ParameterSet& PSet){
-
-  src_ = PSet.getParameter<edm::InputTag>("src");
+BasicToPFJet::BasicToPFJet(const edm::ParameterSet& PSet) :
+  src_ (PSet.getParameter<edm::InputTag>("src")),
+  inputToken_ (consumes<reco::BasicJetCollection>(PSet.getParameter<edm::InputTag>("src")))
+{
   produces<reco::PFJetCollection>();
-
 }
 
 void BasicToPFJet::beginJob(){}
@@ -13,7 +13,7 @@ void BasicToPFJet::produce( edm::Event& Event, const edm::EventSetup& EventSetup
 
   //first get the basic jet collection
   edm::Handle<reco::BasicJetCollection> BasicJetColl;
-  Event.getByLabel(src_, BasicJetColl);
+  Event.getByToken(inputToken_, BasicJetColl);
 
   //now make the new pf jet collection
   reco::PFJetCollection* PFJetColl = new reco::PFJetCollection;
@@ -35,4 +35,4 @@ void BasicToPFJet::produce( edm::Event& Event, const edm::EventSetup& EventSetup
 
 
 //define as plug-in for the framework
-DEFINE_FWK_MODULE(BasicToPFJet);
+//DEFINE_FWK_MODULE(BasicToPFJet);
