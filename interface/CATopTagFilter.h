@@ -73,7 +73,6 @@ class CATopTagFilter : public HLTFilter {
   double      maxWMass_;
   double      minMinMass_;
   double      maxMinMass_;
-  bool        verbose_;
 
 };
 
