@@ -30,6 +30,8 @@ CATopTagFilter::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(iCo
   
   src_ = iConfig.getParameter<edm::InputTag>("src");
   pfsrc_ = iConfig.getParameter<edm::InputTag>("pfsrc");
+  inputToken_ = (consumes<std::vector<T> >(src_));
+  inputPFToken_ = (consumes<std::vector<T> >(pfsrc_));
   if ( iConfig.exists("TopMass") ) TopMass_ = iConfig.getParameter<double>("TopMass");
   else TopMass_ = 171.;
   if ( iConfig.exists("minTopMass") ) minTopMass_ = iConfig.getParameter<double>("minTopMass");
@@ -69,11 +71,11 @@ bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetu
 
   //get basic jets
   Handle<reco::BasicJetCollection > pBasicJets;
-  iEvent.getByLabel(src_, pBasicJets);
+  iEvent.getByToken(inputToken_, pBasicJets);
 
   //get corresponding pf jets
   Handle<reco::PFJetCollection> pfJets;
-  iEvent.getByLabel(pfsrc_, pfJets);
+  iEvent.getByToken(inputPFToken_, pfJets);
 
   //add filter object
   if(saveTags()){
