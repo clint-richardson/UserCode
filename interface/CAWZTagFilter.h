@@ -9,7 +9,7 @@
 // user include files
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "AnalysisDataFormats/TopObjects/interface/CATopJetTagInfo.h"
+#include "DataFormats/JetReco/interface/CATopJetTagInfo.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "DataFormats/JetReco/interface/BasicJet.h"
 #include "DataFormats/JetReco/interface/CaloJet.h"
@@ -47,15 +47,15 @@ struct GreaterByPtCandPtrUser {
 
 
 //
-// class decleration
+// class declaration
 //
-
+template<typename T>
 class CAWZTagFilter : public HLTFilter {
  public:
   explicit CAWZTagFilter(const edm::ParameterSet&);
   ~CAWZTagFilter();
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
-  virtual bool hltFilter( edm::Event&, const edm::EventSetup&, trigger::TriggerFilterObjectWithRefs & filterobject);
+  virtual bool hltFilter( edm::Event&, const edm::EventSetup&, trigger::TriggerFilterObjectWithRefs & filterobject) const override;
 
 
  private:
@@ -63,6 +63,8 @@ class CAWZTagFilter : public HLTFilter {
 
   edm::InputTag   src_;
   edm::InputTag   pfsrc_;
+  const edm::EDGetTokenT<std::vector<T>> inputToken_;
+  const edm::EDGetTokenT<std::vector<T>> inputPFToken_;
   double      minWMass_;
   double      maxWMass_;
   double      massdropcut_;

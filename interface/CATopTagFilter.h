@@ -10,7 +10,7 @@
 // user include files
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "AnalysisDataFormats/TopObjects/interface/CATopJetTagInfo.h"
+#include "DataFormats/JetReco/interface/CATopJetTagInfo.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/JetReco/interface/BasicJet.h"
@@ -49,15 +49,15 @@ struct GreaterByPtCandPtrUser {
 
 
 //
-// class decleration
+// class declaration
 //
-
+template<typename T>
 class CATopTagFilter : public HLTFilter {
  public:
   explicit CATopTagFilter(const edm::ParameterSet&);
   ~CATopTagFilter();
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
-  virtual bool hltFilter( edm::Event&, const edm::EventSetup&, trigger::TriggerFilterObjectWithRefs & filterobject);
+  virtual bool hltFilter( edm::Event&, const edm::EventSetup&, trigger::TriggerFilterObjectWithRefs & filterobject) const override;
 
  private:
   // ----------member data ---------------------------
