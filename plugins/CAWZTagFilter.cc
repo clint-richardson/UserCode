@@ -36,8 +36,7 @@ CAWZTagFilter::CAWZTagFilter(const edm::ParameterSet& iConfig): HLTFilter(iConfi
   else maxWMass_ = 999999;
   if ( iConfig.exists("massdropcut") ) massdropcut_ = iConfig.getParameter<double>("massdropcut");
   else massdropcut_ = 1;
-  if ( iConfig.exists("verbose") ) verbose_ = iConfig.getParameter<bool>("verbose");
-  else verbose_ = false;
+
 }
 
 
@@ -53,7 +52,6 @@ void CAWZTagFilter::fillDescriptions(edm::ConfigurationDescriptions& description
   desc.add<double>("massdropcut",0.4);
   desc.add<edm::InputTag>("src",edm::InputTag("hltParticleFlow"));
   desc.add<edm::InputTag>("pfsrc",edm::InputTag("selectedPFJets"));
-  desc.add<bool>("verbose",false);
   desc.add<int>("triggerType",trigger::TriggerJet);
   descriptions.add("hltCA8WZTagFilter",desc);
 }
@@ -90,18 +88,8 @@ bool CAWZTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup
 
     if (ihardJet->pt() < 150) continue;
 
-//     if ( verbose_ ) cout << "Processing ihardJet with pt = " << ihardJet->pt() << " , and mass = " << ihardJet->mass() << endl;
-
     // Get properties
     properties = helper( (reco::Jet&) *ihardJet );
-
-    if (verbose_){
-      cout<<"Found high-pt jet while W-tagging"<<endl;
-      cout<<"nSubJets: "<<(properties.nSubJets)<<endl;
-      cout<<"Mass:     "<<(properties.wMass)<<endl;
-      cout<<"nSubjets: "<<ihardJet->numberOfDaughters()<<endl;
-      cout<<endl;
-    }
 
     if (properties.wMass < minWMass_ || properties.wMass > maxWMass_) continue;
     else {

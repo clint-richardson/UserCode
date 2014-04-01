@@ -46,8 +46,6 @@ CATopTagFilter::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(iCo
   else minMinMass_ = -1;
   if ( iConfig.exists("maxMinMass") ) maxMinMass_ = iConfig.getParameter<double>("maxMinMass");
   else maxMinMass_ = 999999;
-  if ( iConfig.exists("verbose") ) verbose_ = iConfig.getParameter<bool>("verbose");
-  else verbose_ = false;
 }
 
 
@@ -61,7 +59,6 @@ void CATopTagFilter::fillDescriptions(edm::ConfigurationDescriptions& descriptio
   desc.add<double>("minTopMass",140.);
   desc.add<edm::InputTag>("src",edm::InputTag("hltParticleFlow"));
   desc.add<edm::InputTag>("pfsrc",edm::InputTag("selectedPFJets"));
-  desc.add<bool>("verbose",false);
   desc.add<int>("triggerType",trigger::TriggerJet);
   descriptions.add("hltCA8TopTagFilter",desc);
 }
@@ -69,10 +66,6 @@ void CATopTagFilter::fillDescriptions(edm::ConfigurationDescriptions& descriptio
 bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup, trigger::TriggerFilterObjectWithRefs & filterobject)
 {
 
-  
-  // Get the input list of basic jets corresponding to the hard jets
-  // Handle<reco::Jet > pBasicJets;
-  // iEvent.getByLabel(src_, pBasicJets);
 
   //get basic jets
   Handle<reco::BasicJetCollection > pBasicJets;
@@ -101,18 +94,8 @@ bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetu
 
     if (ihardJet->pt() < 350) continue;
 
-//     if ( verbose_ ) cout << "Processing ihardJet with pt = " << ihardJet->pt() << endl;
-
     // Get properties
     properties = helper( (reco::Jet&) *ihardJet );
-
-    if (verbose_){
-      cout<<"Found high-pt jet while top-tagging;"<<endl;
-      cout<<"wMass:    "<<(properties.wMass)<<endl;
-      cout<<"minMass:  "<<(properties.minMass)<<endl;
-      cout<<"topMass:  "<<(properties.topMass)<<endl;
-      cout<<"nSubJets: "<<(properties.nSubJets)<<endl; 
-    }
 
     if (properties.minMass < minMinMass_ || properties.minMass > maxMinMass_ || properties.wMass < minWMass_ || properties.wMass > maxWMass_ || properties.topMass < minTopMass_ || properties.topMass > maxTopMass_) continue;
     else {
