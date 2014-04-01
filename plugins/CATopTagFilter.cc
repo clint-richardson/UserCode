@@ -18,6 +18,7 @@
 //
 
 #include "../interface/CATopTagFilter.h"
+#include <typeinfo>
 
 using namespace std;
 using namespace reco;
@@ -26,12 +27,13 @@ using namespace edm;
 //
 // constructors and destructor
 //
-CATopTagFilter::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(iConfig){
-  
-  src_ = iConfig.getParameter<edm::InputTag>("src");
-  pfsrc_ = iConfig.getParameter<edm::InputTag>("pfsrc");
-  inputToken_ = (consumes<std::vector<T> >(src_));
-  inputPFToken_ = (consumes<std::vector<T> >(pfsrc_));
+template<typename T>
+CATopTagFilter<T>::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(iConfig),  
+								      src_  (iConfig.getParameter<edm::InputTag>("src")),
+								      pfsrc_ (iConfig.getParameter<edm::InputTag>("pfsrc")),
+								      inputToken_ (consumes<std::vector<T> >(src_)),
+								      inputPFToken_ (consumes<std::vector<T> >(pfsrc_))
+{
   if ( iConfig.exists("TopMass") ) TopMass_ = iConfig.getParameter<double>("TopMass");
   else TopMass_ = 171.;
   if ( iConfig.exists("minTopMass") ) minTopMass_ = iConfig.getParameter<double>("minTopMass");
@@ -50,10 +52,11 @@ CATopTagFilter::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(iCo
   else maxMinMass_ = 999999;
 }
 
+template<typename T>
+CATopTagFilter<T>::~CATopTagFilter(){}
 
-CATopTagFilter::~CATopTagFilter(){}
-
-void CATopTagFilter::fillDescriptions(edm::ConfigurationDescriptions& descriptions){
+template<typename T>
+void CATopTagFilter<T>::fillDescriptions(edm::ConfigurationDescriptions& descriptions){
   edm::ParameterSetDescription desc;
   makeHLTFilterDescription(desc);
   desc.add<double>("maxTopMass",230.);
@@ -65,7 +68,8 @@ void CATopTagFilter::fillDescriptions(edm::ConfigurationDescriptions& descriptio
   descriptions.add("hltCA8TopTagFilter",desc);
 }
 // ------------ method called to for each event  ------------
-bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup, trigger::TriggerFilterObjectWithRefs & filterobject)
+template<typename T>
+bool CATopTagFilter<T>::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup, trigger::TriggerFilterObjectWithRefs & filterobject) const
 {
 
 
@@ -120,4 +124,4 @@ bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetu
  
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(CATopTagFilter);
+//DEFINE_FWK_MODULE(CATopTagFilter);

@@ -18,6 +18,7 @@
 //
 
 #include "../interface/CAWZTagFilter.h"
+#include <typeinfo>
 
 using namespace std;
 using namespace reco;
@@ -26,10 +27,13 @@ using namespace edm;
 //
 // constructors and destructor
 //
-CAWZTagFilter::CAWZTagFilter(const edm::ParameterSet& iConfig): HLTFilter(iConfig){
-
-  src_ = iConfig.getParameter<InputTag>("src");
-  pfsrc_ = iConfig.getParameter<InputTag>("pfsrc");
+template<typename T>
+CAWZTagFilter<T>::CAWZTagFilter(const edm::ParameterSet& iConfig): HLTFilter(iConfig),
+								      src_  (iConfig.getParameter<edm::InputTag>("src")),
+								      pfsrc_ (iConfig.getParameter<edm::InputTag>("pfsrc")),
+								      inputToken_ (consumes<std::vector<T> >(src_)),
+								      inputPFToken_ (consumes<std::vector<T> >(pfsrc_))
+{
   if ( iConfig.exists("minWMass") ) minWMass_ = iConfig.getParameter<double>("minWMass");
   else minWMass_ = -1;
   if ( iConfig.exists("maxWMass") ) maxWMass_ = iConfig.getParameter<double>("maxWMass");
@@ -39,12 +43,13 @@ CAWZTagFilter::CAWZTagFilter(const edm::ParameterSet& iConfig): HLTFilter(iConfi
 
 }
 
-
-CAWZTagFilter::~CAWZTagFilter()
+template<typename T>
+CAWZTagFilter<T>::~CAWZTagFilter()
 {
 }
 
-void CAWZTagFilter::fillDescriptions(edm::ConfigurationDescriptions& descriptions){
+template<typename T>
+void CAWZTagFilter<T>::fillDescriptions(edm::ConfigurationDescriptions& descriptions){
   edm::ParameterSetDescription desc;
   makeHLTFilterDescription(desc);
   desc.add<double>("maxWMass",130.);
@@ -57,16 +62,17 @@ void CAWZTagFilter::fillDescriptions(edm::ConfigurationDescriptions& description
 }
 
 // ------------ method called to for each event  ------------
-bool CAWZTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup, trigger::TriggerFilterObjectWithRefs & filterobject)
+template<typename T>
+bool CAWZTagFilter<T>::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup, trigger::TriggerFilterObjectWithRefs & filterobject) const
 {
 
   // Get the input list of basic jets corresponding to the hard jets
   Handle<reco::BasicJetCollection> pBasicJets;
-  iEvent.getByLabel(src_, pBasicJets);
+  iEvent.getByToken(inputToken_, pBasicJets);
 
  //get corresponding pf jets
   Handle<reco::PFJetCollection> pfJets;
-  iEvent.getByLabel(pfsrc_, pfJets);
+  iEvent.getByToken(inputPFToken_, pfJets);
 
 
   //add filter object
@@ -108,4 +114,4 @@ bool CAWZTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup
  
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(CAWZTagFilter);
+//DEFINE_FWK_MODULE(CAWZTagFilter);
