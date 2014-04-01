@@ -64,7 +64,8 @@ class CATopTagFilter : public HLTFilter {
 
   edm::InputTag   src_;
   edm::InputTag   pfsrc_;
-
+  const edm::EDGetTokenT<std::vector<T>> inputToken_;
+  const edm::EDGetTokenT<std::vector<T>> inputPFToken_;
   double      TopMass_;
   double      minTopMass_;
   double      maxTopMass_;
