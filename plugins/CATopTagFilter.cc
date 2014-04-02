@@ -27,12 +27,12 @@ using namespace edm;
 //
 // constructors and destructor
 //
-template<typename T>
-CATopTagFilter<T>::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(iConfig),  
+
+CATopTagFilter::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(iConfig),  
 								      src_  (iConfig.getParameter<edm::InputTag>("src")),
 								      pfsrc_ (iConfig.getParameter<edm::InputTag>("pfsrc")),
-								      inputToken_ (consumes<std::vector<T> >(src_)),
-								      inputPFToken_ (consumes<std::vector<T> >(pfsrc_))
+								      inputToken_ (consumes<std::vector<reco::BasicJetCollection> >(src_)),
+								      inputPFToken_ (consumes<std::vector<reco::PFJetCollection> >(pfsrc_))
 {
   if ( iConfig.exists("TopMass") ) TopMass_ = iConfig.getParameter<double>("TopMass");
   else TopMass_ = 171.;
@@ -52,11 +52,11 @@ CATopTagFilter<T>::CATopTagFilter(const edm::ParameterSet& iConfig) : HLTFilter(
   else maxMinMass_ = 999999;
 }
 
-template<typename T>
-CATopTagFilter<T>::~CATopTagFilter(){}
 
-template<typename T>
-void CATopTagFilter<T>::fillDescriptions(edm::ConfigurationDescriptions& descriptions){
+CATopTagFilter::~CATopTagFilter(){}
+
+
+void CATopTagFilter::fillDescriptions(edm::ConfigurationDescriptions& descriptions){
   edm::ParameterSetDescription desc;
   makeHLTFilterDescription(desc);
   desc.add<double>("maxTopMass",230.);
@@ -68,8 +68,8 @@ void CATopTagFilter<T>::fillDescriptions(edm::ConfigurationDescriptions& descrip
   descriptions.add("hltCA8TopTagFilter",desc);
 }
 // ------------ method called to for each event  ------------
-template<typename T>
-bool CATopTagFilter<T>::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup, trigger::TriggerFilterObjectWithRefs & filterobject) const
+
+bool CATopTagFilter::hltFilter( edm::Event& iEvent, const edm::EventSetup& iSetup, trigger::TriggerFilterObjectWithRefs & filterobject) const
 {
 
 
@@ -124,4 +124,4 @@ bool CATopTagFilter<T>::hltFilter( edm::Event& iEvent, const edm::EventSetup& iS
  
 
 //define this as a plug-in
-//DEFINE_FWK_MODULE(CATopTagFilter);
+DEFINE_FWK_MODULE(CATopTagFilter);
