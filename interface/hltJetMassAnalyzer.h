@@ -16,7 +16,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "DataFormats/JetReco/interface/Jet.h"
-#include "AnalysisDataFormats/TopObjects/interface/CATopJetTagInfo.h"
+#include "DataFormats/JetReco/interface/CATopJetTagInfo.h"
 
 
 // user include files
