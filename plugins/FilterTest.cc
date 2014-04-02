@@ -11,7 +11,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "DataFormats/JetReco/interface/Jet.h"
-#include "AnalysisDataFormats/TopObjects/interface/CATopJetTagInfo.h"
+#include "DataFormats/JetReco/interface/CATopJetTagInfo.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
