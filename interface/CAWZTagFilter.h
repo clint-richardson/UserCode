@@ -49,7 +49,7 @@ struct GreaterByPtCandPtrUser {
 //
 // class declaration
 //
-template<typename T>
+
 class CAWZTagFilter : public HLTFilter {
  public:
   explicit CAWZTagFilter(const edm::ParameterSet&);
@@ -63,8 +63,8 @@ class CAWZTagFilter : public HLTFilter {
 
   edm::InputTag   src_;
   edm::InputTag   pfsrc_;
-  const edm::EDGetTokenT<std::vector<T>> inputToken_;
-  const edm::EDGetTokenT<std::vector<T>> inputPFToken_;
+  const edm::EDGetTokenT<std::vector<reco::BasicJetCollection>> inputToken_;
+  const edm::EDGetTokenT<std::vector<reco::PFJetCollection>> inputPFToken_;
   double      minWMass_;
   double      maxWMass_;
   double      massdropcut_;

@@ -51,7 +51,7 @@ struct GreaterByPtCandPtrUser {
 //
 // class declaration
 //
-template<typename T>
+
 class CATopTagFilter : public HLTFilter {
  public:
   explicit CATopTagFilter(const edm::ParameterSet&);
@@ -64,8 +64,8 @@ class CATopTagFilter : public HLTFilter {
 
   edm::InputTag   src_;
   edm::InputTag   pfsrc_;
-  const edm::EDGetTokenT<std::vector<T>> inputToken_;
-  const edm::EDGetTokenT<std::vector<T>> inputPFToken_;
+  const edm::EDGetTokenT<std::vector<reco::BasicJetCollection>> inputToken_;
+  const edm::EDGetTokenT<std::vector<reco::PFJetCollection>> inputPFToken_;
   double      TopMass_;
   double      minTopMass_;
   double      maxTopMass_;
