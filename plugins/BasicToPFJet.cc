@@ -1,14 +1,35 @@
+// -*- C++ -*-
+//
+// Package:    BasicToPFJet
+// Class:      BasicToPFJet
+// 
+/**\class BasicToPFJet BasicToPFJet.cc UserCode/BasicToPFJet/plugins/BasicToPFJet.cc
+
+ Description: converts reco::BasicJets to reco::PFJets and adds the new PFJetCollection to the event. Originally designed
+              to be a work around for a way to store reco::BasicJets at HLT level
+
+ Implementation:
+     [Notes on implementation]
+*/
+//
+// Original Author:  clint richardson
+//         Created:  Thu, 6 Mar 2014 12:00:00 GMT
+// $Id$
+//
+//
+
 #include "../interface/BasicToPFJet.h"
 
 BasicToPFJet::BasicToPFJet(const edm::ParameterSet& PSet) :
   src_ (PSet.getParameter<edm::InputTag>("src")),
-  inputToken_ (consumes<reco::BasicJetCollection>(PSet.getParameter<edm::InputTag>("src")))
+  inputToken_ (consumes<reco::BasicJetCollection>(src_))
 {
   produces<reco::PFJetCollection>();
 }
 
-void BasicToPFJet::beginJob(){}
-void BasicToPFJet::endJob(){}
+BasicToPFJet::~BasicToPFJet(){}
+
+
 void BasicToPFJet::produce( edm::Event& Event, const edm::EventSetup& EventSetup){
 
   //first get the basic jet collection
@@ -33,6 +54,6 @@ void BasicToPFJet::produce( edm::Event& Event, const edm::EventSetup& EventSetup
   Event.put(selectedPFJets);
 }
 
-
+ 
 //define as plug-in for the framework
-//DEFINE_FWK_MODULE(BasicToPFJet);
+DEFINE_FWK_MODULE(BasicToPFJet);
