@@ -63,8 +63,8 @@ class CAWZTagFilter : public HLTFilter {
 
   edm::InputTag   src_;
   edm::InputTag   pfsrc_;
-  const edm::EDGetTokenT<std::vector<reco::BasicJetCollection>> inputToken_;
-  const edm::EDGetTokenT<std::vector<reco::PFJetCollection>> inputPFToken_;
+  const edm::EDGetTokenT<reco::BasicJetCollection> inputToken_;
+  const edm::EDGetTokenT<reco::PFJetCollection> inputPFToken_;
   double      minWMass_;
   double      maxWMass_;
   double      massdropcut_;

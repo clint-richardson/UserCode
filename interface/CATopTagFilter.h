@@ -10,6 +10,8 @@
 // user include files
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/PluginManager/interface/ModuleDef.h"
+#include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "DataFormats/JetReco/interface/CATopJetTagInfo.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "DataFormats/Math/interface/deltaR.h"
@@ -64,8 +66,8 @@ class CATopTagFilter : public HLTFilter {
 
   edm::InputTag   src_;
   edm::InputTag   pfsrc_;
-  const edm::EDGetTokenT<std::vector<reco::BasicJetCollection>> inputToken_;
-  const edm::EDGetTokenT<std::vector<reco::PFJetCollection>> inputPFToken_;
+  const edm::EDGetTokenT<reco::BasicJetCollection> inputToken_;
+  const edm::EDGetTokenT<reco::PFJetCollection> inputPFToken_;
   double      TopMass_;
   double      minTopMass_;
   double      maxTopMass_;
