@@ -32,6 +32,7 @@ class BasicToPFJet : public edm::EDProducer {
   explicit BasicToPFJet(const edm::ParameterSet& PSet);
   virtual ~BasicToPFJet();
   virtual void produce(edm::Event & event, const edm::EventSetup & EventSetup) override;
+  static void fillDescriptions(edm::ConfigurationDescriptions & descriptions);
 
  private:
   edm::InputTag src_;
