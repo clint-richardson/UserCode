@@ -31,8 +31,8 @@ using namespace edm;
 CAWZTagFilter::CAWZTagFilter(const edm::ParameterSet& iConfig): HLTFilter(iConfig),
 								      src_  (iConfig.getParameter<edm::InputTag>("src")),
 								      pfsrc_ (iConfig.getParameter<edm::InputTag>("pfsrc")),
-								   inputToken_ (consumes<std::vector<reco::BasicJetCollection> >(src_)),
-								   inputPFToken_ (consumes<std::vector<reco::PFJetCollection> >(pfsrc_))
+								   inputToken_ (consumes<reco::BasicJetCollection>(src_)),
+								   inputPFToken_ (consumes<reco::PFJetCollection>(pfsrc_))
 {
   if ( iConfig.exists("minWMass") ) minWMass_ = iConfig.getParameter<double>("minWMass");
   else minWMass_ = -1;
