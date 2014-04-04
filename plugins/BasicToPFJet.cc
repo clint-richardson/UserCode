@@ -30,6 +30,12 @@ BasicToPFJet::BasicToPFJet(const edm::ParameterSet& PSet) :
 BasicToPFJet::~BasicToPFJet(){}
 
 
+void BasicToPFJet::fillDescriptions(edm::ConfigurationDescriptions& descriptions){
+  edm::ParameterSetDescription desc;
+  desc.add<edm::InputTag>("src",edm::InputTag(""));
+  descriptions.add("BasicToPFJet",desc);
+}
+
 void BasicToPFJet::produce( edm::Event& Event, const edm::EventSetup& EventSetup){
 
   //first get the basic jet collection
