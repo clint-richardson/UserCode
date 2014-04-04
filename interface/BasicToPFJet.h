@@ -7,6 +7,9 @@
 #include <sstream>
 
 // user include files
+#include "FWCore/PluginManager/interface/ModuleDef.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/JetReco/interface/CATopJetTagInfo.h"
@@ -27,12 +30,10 @@ class BasicToPFJet : public edm::EDProducer {
  public:
 
   explicit BasicToPFJet(const edm::ParameterSet& PSet);
-  virtual ~BasicToPFJet(){};
+  virtual ~BasicToPFJet();
+  virtual void produce(edm::Event & event, const edm::EventSetup & EventSetup) override;
 
  private:
-  virtual void beginJob();
-  virtual void produce(edm::Event & event, const edm::EventSetup & EventSetup);
-  virtual void endJob();
   edm::InputTag src_;
   const edm::EDGetTokenT<reco::BasicJetCollection> inputToken_;
 };
