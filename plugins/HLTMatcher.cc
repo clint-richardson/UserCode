@@ -43,6 +43,9 @@
 using std::cout;
 using std::endl;
 
+int GetIteratorByDeltaR(const reco::BasicJet& recojet,std::auto_ptr<reco::BasicJetCollection > hltJetColl);
+bool toptag(reco::Jet::Constituents subjets,float jetmass);
+
 struct GreaterByPtCandPtrUser {
   bool operator()( const edm::Ptr<reco::Candidate> & t1, const edm::Ptr<reco::Candidate> & t2 ) const {
     return t1->pt() > t2->pt();
@@ -68,7 +71,7 @@ private:
   TH1F* pthist;
   std::string histname_;
   edm::InputTag   OfflinejetColl;
-  edm::InnputTag  OnlinejetColl;
+  edm::InputTag  OnlinejetColl;
 };
 
 HLTMatcher::HLTMatcher(const edm::ParameterSet& Pset){
@@ -79,7 +82,7 @@ HLTMatcher::HLTMatcher(const edm::ParameterSet& Pset){
   if (Pset.exists("OfflinejetCollection")) OfflinejetColl = Pset.getParameter<edm::InputTag>("OfflinejetCollection");
   else                              OfflinejetColl = edm::InputTag("ca8PFJetsCHS");  
   if (Pset.exists("OnlinejetCollection")) OnlinejetColl = Pset.getParameter<edm::InputTag>("OnlinejetCollection");
-  else                              OfflinejetColl = edm::InputTag("ca8PFJetsCHS");  
+  else                              OnlinejetColl = edm::InputTag("hltCA8PFJets");  
   histname_ = Pset.getParameter<std::string>("histname");
   //attempt to add histogram
   edm::Service<TFileService> fs;
@@ -133,23 +136,23 @@ void HLTMatcher::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
 int GetIteratorByDeltaR(const reco::BasicJet& recojet,std::auto_ptr<reco::BasicJetCollection > hltJetColl){
 
   float eta1 = recojet.eta();
-  float ph1 = recojet.phi();
+  float phi1 = recojet.phi();
 
   int iter=0;
   float mindR=1000;
 
-  for(int i=0; i<hltJetColl->size(),i++){
+  for(unsigned int i=0; i<hltJetColl->size();i++){
     const reco::BasicJet& ihltjet = (*hltJetColl)[i];
     float eta2 = ihltjet.eta();
     float phi2 = ihltjet.phi();
 
-    float dR = pow( pow(eta1-eta2,2) + pow(phi1-ph2,2), 0.5);
+    float dR = pow( pow(eta1-eta2,2) + pow(phi1-phi2,2), 0.5);
     if(dR<mindR){
       mindR=dR;
       iter=i;
     }
   }
-  if(midR>0.1) return -1;
+  if(mindR>0.1) return -1;
   return iter;
 }
 
@@ -179,7 +182,7 @@ bool toptag(reco::Jet::Constituents subjets,float jetmass){
     }// end first loop over subjets
   }// endif 3 subjets
 
-  if(subjets.size()>=3 && minmass>=50 && jetmass()>140 && jetmass()<230){
+  if(subjets.size()>=3 && minmass>=50 && jetmass>140 && jetmass<230){
     return true;
   }
   else return false;
