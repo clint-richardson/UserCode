@@ -21,8 +21,8 @@ hltJetMassAnalyzer::hltJetMassAnalyzer(const edm::ParameterSet & PSet){
   }
 
   //initialize the histograms
-  masshist = fs->make<TH1F>(masstitle.c_str(),"masshist",100,0.,300);
-  pthist = fs->make<TH1F>(ptTitle.c_str(),"pthist",100,0.,2000);
+  masshist = fs->make<TH1F>(masstitle.c_str(),"masshist",50,0.,300.);
+  pthist = fs->make<TH1F>(ptTitle.c_str(),"pthist",50,0.,1200.);
 
 };
 
