@@ -2,7 +2,7 @@
 
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process( "HLT" )
+process = cms.Process( "HLT2" )
 
 process.HLTConfigVersion = cms.PSet(
   tableName = cms.string('/users/avetisya/JetSubstructure/8e33v2.2/HLT/V5')
@@ -8187,10 +8187,26 @@ process.hltPreCA8PFJet320 = cms.EDFilter( "HLTPrescaler",
     offset = cms.uint32( 0 )
 )
 
-process.hltPreTopTagEfficiencyHistMaker = cms.EDProducer("Matcher",
+process.hltPreTopTagEfficiencyHistMaker = cms.EDProducer("PreHLTTopMatcher",
                                                          jetCollection = cms.InputTag("cmsTopTagPFJetsCHS"),
                                                          histname = cms.string("PrePTHist"),
                                                          )
+
+process.hltPreWZTagEfficiencyHistMaker = cms.EDProducer("PreHLTWZMatcher",
+                                                         jetCollection = cms.InputTag("ca8PFJetsCHSPruned"),
+                                                         histname = cms.string("PrePTHist"),
+                                                         )
+
+
+process.hltOfflineTopTagCounter = cms.EDProducer("TopCounter",
+                                             jetCollection = cms.InputTag("cmsTopTagPFJetsCHS"),
+                                             )
+
+
+process.hltOfflineWZTagCounter = cms.EDProducer("WZCounter",
+                                             jetCollection = cms.InputTag("ca8PFJetsCHSPruned"),
+                                             )
+
 
 
 process.hltCambridgeAachen8CaloJetsRegional = cms.EDProducer( "FastjetJetProducer",
@@ -8462,13 +8478,12 @@ process.hltCA8TopJets = cms.EDProducer("CATopJetProducer",
 )
 
 
-process.hltCA8WZJets = cms.EDProducer("CATopJetProducer",
-
+process.hltCA8WZJets = cms.EDProducer("FastjetJetProducer",
     src            = cms.InputTag('hltParticleFlow'),
-    srcPVs         = cms.InputTag(''),
+    srcPVs         = cms.InputTag('hltPixelVertices'),
     jetType        = cms.string('PFJet'),
     doOutputJets   = cms.bool(True),
-    jetPtMin       = cms.double(100.0),
+    jetPtMin       = cms.double(20.0),
     inputEMin      = cms.double(0.0),
     inputEtMin     = cms.double(0.0),
     doPVCorrection = cms.bool(False),
@@ -8476,9 +8491,9 @@ process.hltCA8WZJets = cms.EDProducer("CATopJetProducer",
     doPUOffsetCorr = cms.bool(False),
     # if pileup is false, these are not read:
     nSigmaPU = cms.double(1.0),
-    radiusPU = cms.double(0.5),  
+    radiusPU = cms.double(0.5),
     # fastjet-style pileup     
-    doAreaFastjet       = cms.bool( True),
+    doAreaFastjet       = cms.bool( False),
     doRhoFastjet        = cms.bool( False),
     doAreaDiskApprox    = cms.bool( False),
     Active_Area_Repeats = cms.int32(    1),
@@ -8488,39 +8503,25 @@ process.hltCA8WZJets = cms.EDProducer("CATopJetProducer",
     voronoiRfact        = cms.double(-0.9),
     useDeterministicSeed= cms.bool( True ),
     minSeed             = cms.uint32( 14327 ),
-
     maxBadEcalCells         = cms.uint32(9999999),
     maxRecoveredEcalCells   = cms.uint32(9999999),
     maxProblematicEcalCells = cms.uint32(9999999),
     maxBadHcalCells         = cms.uint32(9999999),
     maxRecoveredHcalCells   = cms.uint32(9999999),
     maxProblematicHcalCells = cms.uint32(9999999),
-                                       
-    jetCollInstanceName = cms.string("caTopSubJets"),	# subjet collection
-    verbose = cms.bool(False),              
-    algorithm = cms.int32(1),                   			# 0 = KT, 1 = CA, 2 = anti-KT
-    tagAlgo = cms.int32(0),				#choice of top tagging algorithm
-    useAdjacency = cms.int32(2),         				# veto adjacent subjets
-    #  0 = no adjacency
-    #  1 = deltar adjacency 
-    #  2 = modified adjacency
-    #  3 = calotower neirest neigbor based adjacency (untested)
-    centralEtaCut = cms.double(2.5),        			# eta for defining "central" jets                                     
-    sumEtBins = cms.vdouble(0,1600,2600),          		# sumEt bins over which cuts vary. vector={bin 0 lower bound, bin 1 lower bound, ...} 
-    rBins = cms.vdouble(0.8,0.8,0.8),           		# Jet distance paramter R. R values depend on sumEt bins.
-    ptFracBins = cms.vdouble(0.05,0.05,0.05),    		# minimum fraction of central jet pt for subjets (deltap)
-    deltarBins = cms.vdouble(0.19,0.19,0.19),           # Applicable only if useAdjacency=1. deltar adjacency values for each sumEtBin
-    nCellBins = cms.vdouble(1.9,1.9,1.9),           	# Applicable only if useAdjacency=3. number of cells apart for two subjets to be considered "independent"
-    useMaxTower = cms.bool(False),          			# use max tower in adjacency criterion, otherwise use centroid - NOT USED
-    sumEtEtaCut = cms.double(3.0),          			# eta for event SumEt - NOT USED                                                 
-    etFrac = cms.double(0.7),               			# fraction of event sumEt / 2 for a jet to be considered "hard" - NOT USED
-    debugLevel = cms.untracked.int32(0),     			# debu
-
+    nFilt = cms.int32(2),                # number of subjets to decluster the fat jet into (actual value can be less if less than 6 constituents in fat jet).
+    zcut = cms.double(0.1),                 # zcut parameter for pruning (see ref. for details)
+    rcut_factor = cms.double(0.5),           # rcut factor for pruning (the ref. uses 0.5)
     jetAlgorithm = cms.string("CambridgeAachen"),
-    rParam = cms.double(0.8),
-    writeCompound = cms.bool(True)
+    rParam       = cms.double(0.8),
+    usePruning = cms.bool(True),
+    useExplicitGhosts = cms.bool(True),
+    writeCompound = cms.bool(True),
+    addBTagInfo = cms.bool(False),
+    embedCaloTowers = cms.bool(True),
+    embedPFCandidates = cms.bool(True),
+    jetCollInstanceName=cms.string("SubJets")
 )
-
 process.hltCambridgeAachen8PFJetsWZ = cms.EDProducer( "FastjetJetProducer",
     SubJetParameters = cms.PSet(
        zcut = cms.double( 0.1 ),
@@ -8597,10 +8598,27 @@ process.hltCATopTagFilter = cms.EDFilter("CATopTagFilter",
     saveTags = cms.bool(True)          
 )
 
-process.hltPostTopTagEfficiencyHistMaker = cms.EDProducer("Matcher",
-                                                         jetCollection = cms.InputTag("cmsTopTagPFJetsCHS"),
+process.hltPostTopTagEfficiencyHistMaker = cms.EDProducer("HLTTopMatcher",
+                                                         OfflinejetCollection = cms.InputTag("cmsTopTagPFJetsCHS"),
+                                                         OnlinejetCollection = cms.InputTag("hltCA8TopJets"),
                                                          histname = cms.string("PostPTHist"),
                                                          )
+
+process.hltPostWZTagEfficiencyHistMaker = cms.EDProducer("HLTWZMatcher",
+                                                         OfflinejetCollection = cms.InputTag("ca8PFJetsCHSPruned"),
+                                                         OnlinejetCollection = cms.InputTag("hltCA8WZJets"),
+                                                         histname = cms.string("PostPTHist"),
+                                                         )
+
+
+process.hltOnlineTopTagCounter = cms.EDProducer("TopCounter",
+                                                jetCollection = cms.InputTag("hltCA8TopJets"),
+                                                )
+
+process.hltOnlineWZTagCounter = cms.EDProducer("WZCounter",
+                                                jetCollection = cms.InputTag("hltCA8WZJets"),
+                                                )
+
 
 process.hltCA8PFJetL1FastL2L3Corrected = cms.EDProducer( "PFJetCorrectionProducer",
     src = cms.InputTag( "hltCambridgeAachen8PFJets" ),
@@ -43291,13 +43309,13 @@ process.HLTriggerFirstPath = cms.Path( process.hltGetConditions + process.hltGet
 process.HLT_CA8PFJET320_v1 = cms.Path( process.HLTBeginSequence + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.HLTPFL1FastL2L3ReconstructionSequenceCA8bak + process.hltPFCA8JetsMatchedToCaloJets260Regionalbak + process.hlt1PFCA8Jet320bak + process.HLTEndSequence )
 #process.HLT_CA8PFJET320TopTag_v1 = cms.Path( process.HLTBeginSequence + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.HLTPFL1FastL2L3ReconstructionSequenceCA8Top + process.hltPFCA8JetsMatchedToCaloJets260RegionalTop + process.hlt1PFCA8Jet320Top  + process.hltCA8TopJets + process.hltCATopTagFilter + process.HLTEndSequence )
 
-process.HLT_CA8PFJET320TopTag_v1 = cms.Path( process.HLTBeginSequence + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.hltPreTopTagEfficiencyHistMaker + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.hltCA8TopJets + process.hltCA8TopPFJets + process.hltCATopTagFilter + process.hltPostTopTagEfficiencyHistMaker + process.HLTEndSequence )
+process.HLT_CA8PFJET320TopTag_v1 = cms.Path( process.HLTBeginSequence + process.hltOfflineTopTagCounter + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.hltPreTopTagEfficiencyHistMaker + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.hltCA8TopJets + process.hltCA8TopPFJets + process.hltPostTopTagEfficiencyHistMaker + process.hltCATopTagFilter + process.hltOnlineTopTagCounter + process.HLTEndSequence )
 
 #process.HLT_CA8PFJET320WZTag_v1 = cms.Path( process.HLTBeginSequence + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.HLTPFL1FastL2L3ReconstructionSequenceCA8WZ + process.hltPFCA8JetsMatchedToCaloJets260RegionalWZ + process.hlt1PFCA8Jet320WZ + process.HLTEndSequence )
-process.HLT_CA8PFJET320WZTag_v1 = cms.Path( process.HLTBeginSequence + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.hltCA8WZJets + process.hltCA8WZPFJets + process.hltCAWZTagFilter + process.HLTEndSequence )
+process.HLT_CA8PFJET320WZTag_v1 = cms.Path( process.HLTBeginSequence + process.hltOfflineWZTagCounter + process.hltL1sL1SingleJet128 + process.hltPreCA8PFJet320 + process.hltPreWZTagEfficiencyHistMaker + process.HLTRegionalRecoJetSequenceCA8Corrected + process.hltSingleCA8Jet260Regional + process.hltCA8WZJets + process.hltCA8WZPFJets + process.hltPostWZTagEfficiencyHistMaker + process.hltCAWZTagFilter + process.hltOnlineWZTagCounter + process.HLTEndSequence )
 
 process.HLTriggerFinalPath = cms.Path( process.hltGtDigis + process.hltScalersRawToDigi + process.hltFEDSelector + process.hltTriggerSummaryAOD + process.hltTriggerSummaryRAW )
-process.AOutput = cms.EndPath( process.hltPreAOutput + process.hltOutputA )
+#process.AOutput = cms.EndPath( process.hltPreAOutput + process.hltOutputA )
 process.TFileService = cms.Service("TFileService",
                                    fileName = cms.string('reco_pt.root')
                                    )
