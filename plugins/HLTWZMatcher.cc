@@ -44,7 +44,7 @@ using std::cout;
 using std::endl;
 
 
-bool wztag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist, TH1F* mdhist1, TH1F* mdhist2,int mode);
+bool wztag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist, TH1F* mdhist1, TH1F* mdhist2,int mode, double minWM, double maxWM, double mdc);
 
 struct GreaterByPtCandPtrUser {
   bool operator()( const edm::Ptr<reco::Candidate> & t1, const edm::Ptr<reco::Candidate> & t2 ) const {
@@ -87,6 +87,10 @@ private:
   std::string histname_;
   edm::InputTag   OfflinejetColl;
   edm::InputTag  OnlinejetColl;
+
+  double minWMass;
+  double maxWMass;
+  double massdropcut;
 };
 
 HLTWZMatcher::HLTWZMatcher(const edm::ParameterSet& Pset){
@@ -98,6 +102,12 @@ HLTWZMatcher::HLTWZMatcher(const edm::ParameterSet& Pset){
   else                              OfflinejetColl = edm::InputTag("ca8PFJetsCHS");  
   if (Pset.exists("OnlinejetCollection")) OnlinejetColl = Pset.getParameter<edm::InputTag>("OnlinejetCollection");
   else                              OnlinejetColl = edm::InputTag("hltCA8TopJets");  
+  if (Pset.exists("minWMass")) minWMass = Pset.getParameter<double>("minWMass");
+  else                              minWMass = 60;
+  if (Pset.exists("maxWMass")) maxWMass = Pset.getParameter<double>("maxWMass");
+  else                              minWMass = 130;
+  if (Pset.exists("massdropcut")) massdropcut = Pset.getParameter<double>("massdropcut");
+  else                              massdropcut = 0.4;
   histname_ = Pset.getParameter<std::string>("histname");
   //attempt to add histogram
   edm::Service<TFileService> fs;
@@ -179,10 +189,10 @@ void HLTWZMatcher::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
     reco::Jet::Constituents hltsubjets = ihltjet->getJetConstituents();
     //cout<<"got hlt subjets"<<endl;
     ratiosjhist_nc->Fill(hltsubjets.size()/recosubjets.size());
-    bool reco_pass = wztag(recosubjets,recomass,recosjhist,recomdhist_nc,recomdhist_c,0);
+    bool reco_pass = wztag(recosubjets,recomass,recosjhist,recomdhist_nc,recomdhist_c,0,minWMass,maxWMass,massdropcut);
     //if(reco_pass) //cout<<"got reco pass"<<endl;
       //if(!reco_pass) //cout<<"got reco fail"<<endl;
-    bool hlt_pass = wztag(hltsubjets,hltmass,hltsjhist,hltmdhist_nc,hltmdhist_c,1);
+    bool hlt_pass = wztag(hltsubjets,hltmass,hltsjhist,hltmdhist_nc,hltmdhist_c,1,minWMass,maxWMass,massdropcut);
     if(hlt_pass){
       //cout<<"got hlt pass"<<endl;
       ratiosjhist_c->Fill(hltsubjets.size()/recosubjets.size());
@@ -204,7 +214,7 @@ void HLTWZMatcher::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
   //cout<<"Number of offline jets in event is: "<<njets<<endl;
 }  
 
-bool wztag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist,TH1F* mdhist1,TH1F* mdhist2,int mode){
+bool wztag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist,TH1F* mdhist1,TH1F* mdhist2,int mode, double minWM, double maxWM, double mdc){
   //instantiate min mass
   float massdrop = 99999.;
 
@@ -226,9 +236,9 @@ bool wztag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist,TH1F* mdh
     if(mode==0){
       cout<<"number of subjets: "<<subjets.size()<<"; jet mass: "<<jetmass<<"; mass drop: "<<massdrop<<endl;
     }
-    if(subjets.size()==2 && jetmass>60 && jetmass<130){
+    if(subjets.size()==2 && jetmass>minWM && jetmass<maxWM){
       mdhist2->Fill(massdrop);
-      if(massdrop<0.4) return true;
+      if(massdrop<mdc) return true;
       else return false;
     }
     else return false;

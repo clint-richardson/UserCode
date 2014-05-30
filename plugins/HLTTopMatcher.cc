@@ -44,7 +44,7 @@ using std::cout;
 using std::endl;
 
 
-bool toptag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist, TH1F* mmhist1, TH1F* mmhist2);
+bool toptag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist, TH1F* mmhist1, TH1F* mmhist2, double minTM, double maxTM, double minMM);
 
 struct GreaterByPtCandPtrUser {
   bool operator()( const edm::Ptr<reco::Candidate> & t1, const edm::Ptr<reco::Candidate> & t2 ) const {
@@ -89,6 +89,10 @@ private:
   std::string histname_;
   edm::InputTag   OfflinejetColl;
   edm::InputTag  OnlinejetColl;
+
+  double minTopMass;
+  double maxTopMass;
+  double minMinMass;
 };
 
 HLTTopMatcher::HLTTopMatcher(const edm::ParameterSet& Pset){
@@ -100,6 +104,12 @@ HLTTopMatcher::HLTTopMatcher(const edm::ParameterSet& Pset){
   else                              OfflinejetColl = edm::InputTag("ca8PFJetsCHS");  
   if (Pset.exists("OnlinejetCollection")) OnlinejetColl = Pset.getParameter<edm::InputTag>("OnlinejetCollection");
   else                              OnlinejetColl = edm::InputTag("hltCA8TopJets");  
+  if (Pset.exists("minTopMass")) minTopMass = Pset.getParameter<double>("minTopMass");
+  else                              minTopMass = 140;
+  if (Pset.exists("maxTopMass")) maxTopMass = Pset.getParameter<double>("maxTopMass");
+  else                              minTopMass = 230;
+  if (Pset.exists("minMinMass")) minMinMass = Pset.getParameter<double>("minMinMass");
+  else                              minMinMass = 50;
   histname_ = Pset.getParameter<std::string>("histname");
   //attempt to add histogram
   edm::Service<TFileService> fs;
@@ -183,10 +193,10 @@ void HLTTopMatcher::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetu
     reco::Jet::Constituents hltsubjets = ihltjet->getJetConstituents();
     //cout<<"got hlt subjets"<<endl;
     ratiosjhist_nc->Fill(hltsubjets.size()/recosubjets.size());
-    bool reco_pass = toptag(recosubjets,recomass,recosjhist,recommhist_nc,recommhist_c);
+    bool reco_pass = toptag(recosubjets,recomass,recosjhist,recommhist_nc,recommhist_c,minTopMass,maxTopMass,minMinMass);
     //if(reco_pass) cout<<"got reco pass"<<endl;
     //if(!reco_pass) cout<<"got reco fail"<<endl;
-    bool hlt_pass = toptag(hltsubjets,hltmass,hltsjhist,hltmmhist_nc,hltmmhist_c);
+    bool hlt_pass = toptag(hltsubjets,hltmass,hltsjhist,hltmmhist_nc,hltmmhist_c,minTopMass,maxTopMass,minMinMass);
     if(hlt_pass){
       //cout<<"got hlt pass"<<endl;
       ratiosjhist_c->Fill(hltsubjets.size()/recosubjets.size());
@@ -213,7 +223,7 @@ void HLTTopMatcher::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetu
 
 }  
 
-bool toptag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist,TH1F* mmhist1,TH1F* mmhist2){
+bool toptag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist,TH1F* mmhist1,TH1F* mmhist2, double minTM, double maxTM, double minMM){
   //instantiate min mass
   float minmass = 99999.;
 
@@ -242,9 +252,9 @@ bool toptag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist,TH1F* mm
   sjhist->Fill(subjets.size());
   mmhist1->Fill(minmass);
 
-  if(subjets.size()>=3 && jetmass>140 && jetmass<230){
+  if(subjets.size()>=3 && jetmass>minTM && jetmass<maxTM){
       mmhist2->Fill(minmass);
-      if(minmass>50) return true;
+      if(minmass>minMM) return true;
       else return false;
   }
   else return false;
