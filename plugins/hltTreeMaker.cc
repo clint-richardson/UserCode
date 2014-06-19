@@ -54,7 +54,7 @@ using std::cout;
 using std::endl;
 
 
-bool toptag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist, TH1F* mmhist1, TH1F* mmhist2, double minTM, double maxTM, double minMM);
+bool toptag(reco::Jet::Constituents subjets,float jetmass, double minTM, double maxTM, double minMM);
 
 struct GreaterByPtCandPtrUser {
   bool operator()( const edm::Ptr<reco::Candidate> & t1, const edm::Ptr<reco::Candidate> & t2 ) const {
@@ -146,6 +146,7 @@ hltTreeMaker::hltTreeMaker(const edm::ParameterSet& Pset){
   produces<std::vector<float> >( "hltTrimJetMass" ).setBranchAlias( "hltTrimJetMass" );
   produces<std::vector<float> >( "recoTrimJetMass" ).setBranchAlias( "recoTrimJetMass" );
   produces<std::vector<float> >( "hltTrimPT" ).setBranchAlias( "hltTrimPT" );
+  produces<std::vector<int> >( "N_hltTrimSubjets" ).setBranchAlias( "N_hltTrimSubjets" );
 
   /*note that I'm not including a trim pass since we want to investigate moving this
   variable around anyway and it's easy enough to plot things with cuts using trees
@@ -240,6 +241,34 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
     ihltWZjet++;
   }
 
+
+  //WZ offline jets
+  //reset iteration variables
+  iter=0;
+  mindR=1000;
+  itemp=0;
+
+
+  for(reco::BasicJetCollection::const_iterator i=recoWZJets->begin(); i!=recoWZJets->end();i++){
+    float eta2 = i->eta();
+    float phi2 = i->phi();
+    
+    float dR = pow( pow(eta1-eta2,2) + pow(phi1-phi2,2), 0.5);
+    if(dR<mindR){
+      mindR=dR;
+      iter=itemp;
+    }
+    itemp+=1;
+  }  
+
+
+  //iterate to the correct reco jet
+  reco::BasicJetCollection::const_iterator irecoWZjet = recoWZJets->begin();
+  for(size_t i=0;i<iter;i++){
+    irecoWZjet++;
+  }
+
+
   //now trimmed jets
   //reset iteration variables
   iter=0;
@@ -265,53 +294,40 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
   }
 
 
-
+  /*now I should have 5 jets:
+   *ihltTopjet
+   *irecoTopjet
+   *ihltWZjet
+   *recoWZjet
+   *ihltTrimjet
+   */
   
   
   //get jet masses;
-  float recomass = irecojet->mass();
-  float hltmass  = ihltjet->mass();
-    recomasshist->Fill(recomass);
-    hltmasshist->Fill(hltmass);
-    ratiomasshist_nc->Fill(hltmass/recomass);
-    //cout<<"got jet masses"<<endl;
-    //get the subjets
-    reco::Jet::Constituents recosubjets = irecojet->getJetConstituents();
-    //cout<<"got reco subjets"<<endl;
-    reco::Jet::Constituents hltsubjets = ihltjet->getJetConstituents();
-    //cout<<"got hlt subjets"<<endl;
-    ratiosjhist_nc->Fill(hltsubjets.size()/recosubjets.size());
-    bool reco_pass = toptag(recosubjets,recomass,recosjhist,recommhist_nc,recommhist_c,minTopMass,maxTopMass,minMinMass);
-    //if(reco_pass) cout<<"got reco pass"<<endl;
-    //if(!reco_pass) cout<<"got reco fail"<<endl;
-    bool hlt_pass = toptag(hltsubjets,hltmass,hltsjhist,hltmmhist_nc,hltmmhist_c,minTopMass,maxTopMass,minMinMass);
-    if(hlt_pass){
-      //cout<<"got hlt pass"<<endl;
-      ratiosjhist_c->Fill(hltsubjets.size()/recosubjets.size());
-      ratiomasshist_c->Fill(hltmass/recomass);
-    }
-    if(!hlt_pass){
-      //cout<<"got hlt fail"<<endl;
-      ratiomasshist_f->Fill(hltmass/recomass);
-    }
-    //make the both jets pass toptag for hist to be filled
-    //if(reco_pass && !hlt_pass) cout<<"I'm handling things fine"<<endl;
-    if(reco_pass && hlt_pass){
-      float pt1 = irecojet->pt();
-      float pt2 = ihltjet->pt();
-      //cout<<"hlt Jet pt is: "<<pt2<<" reco pt is: "<<pt1<<endl;
-      recopthist->Fill(pt1);
-      postpthist->Fill(pt1);
-      //cout<<"filled reco pt hist"<<endl;
-      hltpthist->Fill(pt2);
-      //cout<<"filled hlt pt hist"<<endl;
-    }
+  float recoTopmass = irecoTopjet->mass();
+  float hltTopmass  = ihltTopjet->mass();
+  float hltWZmass  = ihltWZjet->mass();
+  float recoWZmass = irecoWZjet->mass();
+  float hltTrimmass  = ihltTrimjet->mass();
+
+
+  //get the subjets
+  reco::Jet::Constituents recoTopsubjets = irecoTopjet->getJetConstituents();
+  reco::Jet::Constituents hltTopsubjets = ihltTopjet->getJetConstituents();
+  reco::Jet::Constituents recoWZsubjets = irecoWZjet->getJetConstituents();
+  reco::Jet::Constituents hltWZsubjets = ihltWZjet->getJetConstituents();
+  reco::Jet::Constituents hltTrimsubjets = ihltTrimjet->getJetConstituents();
+
+  bool recoTopPass = toptag(recosubjets,recomass,minTopMass,maxTopMass,minMinMass);
+  bool hltTopPass = toptag(hltsubjets,hltmass,minTopMass,maxTopMass,minMinMass);
+
+  bool recoWZPass = WZtag(recosubjets,recomass,recosjhist,recommhist_nc,recommhist_c,minWZMass,maxWZMass,minMinMass);
+  bool hltWZPass = WZtag(hltsubjets,hltmass,hltsjhist,hltmmhist_nc,hltmmhist_c,minWZMass,maxWZMass,minMinMass);
+
   
-  }  
+}    
 
-}  
-
-bool toptag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist,TH1F* mmhist1,TH1F* mmhist2, double minTM, double maxTM, double minMM){
+bool toptag(reco::Jet::Constituents subjets,float jetmass, double minTM, double maxTM, double minMM){
   //instantiate min mass
   float minmass = 99999.;
 
@@ -337,11 +353,7 @@ bool toptag(reco::Jet::Constituents subjets,float jetmass, TH1F* sjhist,TH1F* mm
     }// end first loop over subjets
   }// endif 3 subjets
   
-  sjhist->Fill(subjets.size());
-  mmhist1->Fill(minmass);
-
   if(subjets.size()>=3 && jetmass>minTM && jetmass<maxTM){
-      mmhist2->Fill(minmass);
       if(minmass>minMM) return true;
       else return false;
   }
