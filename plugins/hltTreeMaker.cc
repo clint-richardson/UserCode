@@ -40,6 +40,16 @@
 
 
 
+/*
+This module should store variables of interest in the form of a root tree
+for the leading pT jet in an event. Later hopefully I can figure out how to
+make it loop over all jets. It should store variables corresponding to hlt
+and reco quantities for both top and wz tagging, as well as hlt quantities
+from the trimmed jet producer
+
+*/
+
+
 using std::cout;
 using std::endl;
 
@@ -66,8 +76,14 @@ private:
   virtual void EndJob(){};
 
 
-  edm::InputTag   OfflinejetColl;
-  edm::InputTag  OnlinejetColl;
+  edm::InputTag   OfflineTopjetColl;
+  edm::InputTag  OnlineTopjetColl;
+
+  edm::InputTag   OfflineWZjetColl;
+  edm::InputTag  OnlineWZjetColl;
+
+  edm::InputTag   OfflineTrimjetColl;
+  edm::InputTag  OnlineTrimjetColl;
 
   double minTopMass;
   double maxTopMass;
@@ -76,13 +92,22 @@ private:
 
 hltTreeMaker::hltTreeMaker(const edm::ParameterSet& Pset){
   //load options
-  //  if (Pset.exists("pvCollection")) pvCollection_it = Pset.getParameter<edm::InputTag>("pvCollection");
-  // else                              pvCollection_it = edm::InputTag("goodOfflinePrimaryVertices");
   
-  if (Pset.exists("OfflinejetCollection")) OfflinejetColl = Pset.getParameter<edm::InputTag>("OfflinejetCollection");
+  if (Pset.exists("OfflineTopjetCollection")) OfflinejetColl = Pset.getParameter<edm::InputTag>("OfflineTopjetCollection");
   else                              OfflinejetColl = edm::InputTag("ca8PFJetsCHS");  
-  if (Pset.exists("OnlinejetCollection")) OnlinejetColl = Pset.getParameter<edm::InputTag>("OnlinejetCollection");
-  else                              OnlinejetColl = edm::InputTag("hltCA8TopJets");  
+  if (Pset.exists("OnlineTopjetCollection")) OnlinejetColl = Pset.getParameter<edm::InputTag>("OnlineTopjetCollection");
+  else                              OnlinejetColl = edm::InputTag("hltCA8TopJets"); 
+
+  if (Pset.exists("OfflineWZjetCollection")) OfflinejetColl = Pset.getParameter<edm::InputTag>("OfflineWZjetCollection");
+  else                              OfflinejetColl = edm::InputTag("ca8PFJetsCHS");  
+  if (Pset.exists("OnlineWZjetCollection")) OnlinejetColl = Pset.getParameter<edm::InputTag>("OnlineWZjetCollection");
+  else                              OnlinejetColl = edm::InputTag("hltCA8WZJets");  
+
+  if (Pset.exists("OfflineTrimjetCollection")) OfflinejetColl = Pset.getParameter<edm::InputTag>("OfflineTrimjetCollection");
+  else                              OfflinejetColl = edm::InputTag("ca8PFJetsCHS");  
+  if (Pset.exists("OnlineTrimjetCollection")) OnlinejetColl = Pset.getParameter<edm::InputTag>("OnlineTrimjetCollection");
+  else                              OnlinejetColl = edm::InputTag("hltCA8TopJets");
+  
   if (Pset.exists("minTopMass")) minTopMass = Pset.getParameter<double>("minTopMass");
   else                              minTopMass = 140;
   if (Pset.exists("maxTopMass")) maxTopMass = Pset.getParameter<double>("maxTopMass");
@@ -91,15 +116,42 @@ hltTreeMaker::hltTreeMaker(const edm::ParameterSet& Pset){
   else                              minMinMass = 50;
 
   //set branch aliases
-  produces<std::vector<float> >( "hltJetMass" ).setBranchAlias( "hltJetMass" );
-  produces<std::vector<float> >( "recoJetMass" ).setBranchAlias( "recoJetMass" );
-  produces<std::vector<float> >( "hltPT" ).setBranchAlias( "hltPT" );
-  produces<std::vector<float> >( "recoPT" ).setBranchAlias( "recoPT" );
-  produces<std::vector<int> >( "N_hltSubjets" ).setBranchAlias( "N_hltSubjets" );
-  produces<std::vector<int> >( "N_recoSubjets" ).setBranchAlias( "N_recoSubjets" );
+
+  //top jet variables first
+  produces<std::vector<float> >( "hltTopJetMass" ).setBranchAlias( "hltTopJetMass" );
+  produces<std::vector<float> >( "recoTopJetMass" ).setBranchAlias( "recoTopJetMass" );
+  produces<std::vector<float> >( "hltTopPT" ).setBranchAlias( "hltTopPT" );
+  produces<std::vector<float> >( "recoTopPT" ).setBranchAlias( "recoTopPT" );
+  produces<std::vector<int> >( "N_hltTopSubjets" ).setBranchAlias( "N_hltTopSubjets" );
+  produces<std::vector<int> >( "N_recoTopSubjets" ).setBranchAlias( "N_recoTopSubjets" );
   produces<std::vector<int> >( "hltTopPass" ).setBranchAlias( "hltTopPass" );
   produces<std::vector<int> >( "recoTopPass" ).setBranchAlias( "recoTopPass" );
   produces<std::vector<float> >("hltMinMass").setBranchAlias( "hltMinMass");
+  produces<std::vector<float> >("recoMinMass").setBranchAlias( "recoMinMass");
+
+  //now wz jet variables
+  produces<std::vector<float> >( "hltWZJetMass" ).setBranchAlias( "hltWZJetMass" );
+  produces<std::vector<float> >( "recoWZJetMass" ).setBranchAlias( "recoWZJetMass" );
+  produces<std::vector<float> >( "hltWZPT" ).setBranchAlias( "hltWZPT" );
+  produces<std::vector<float> >( "recoWZPT" ).setBranchAlias( "recoWZPT" );
+  produces<std::vector<int> >( "N_hltWZSubjets" ).setBranchAlias( "N_hltWZSubjets" );
+  produces<std::vector<int> >( "N_recoWZSubjets" ).setBranchAlias( "N_recoWZSubjets" );
+  produces<std::vector<int> >( "hltWZPass" ).setBranchAlias( "hltWZPass" );
+  produces<std::vector<int> >( "recoWZPass" ).setBranchAlias( "recoWZPass" );
+  produces<std::vector<float> >("hltMassDrop").setBranchAlias( "hltMassDrop");
+  produces<std::vector<float> >("recoMassDrop").setBranchAlias( "recoMassDrop");
+
+
+  //now trimmed jet variables
+  produces<std::vector<float> >( "hltTrimJetMass" ).setBranchAlias( "hltTrimJetMass" );
+  produces<std::vector<float> >( "recoTrimJetMass" ).setBranchAlias( "recoTrimJetMass" );
+  produces<std::vector<float> >( "hltTrimPT" ).setBranchAlias( "hltTrimPT" );
+
+  /*note that I'm not including a trim pass since we want to investigate moving this
+  variable around anyway and it's easy enough to plot things with cuts using trees
+  I am including hlt top and wz pass since those are more fixed cuts right now though
+  with the stored information one should be able to redefine them as needed afterwards
+  */
   
 }
 
@@ -107,50 +159,118 @@ void hltTreeMaker::BeginJob(){
 }
 
 void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup){
-  //read in jets
-  edm::Handle<reco::BasicJetCollection> recoJets;
-  iEvent.getByLabel(OfflinejetColl, recoJets);
-  edm::Handle<reco::BasicJetCollection> hltJets;
-  iEvent.getByLabel(OnlinejetColl, hltJets);
-  std::auto_ptr<reco::BasicJetCollection > hltJetColl( new reco::BasicJetCollection (*hltJets));
-  reco::BasicJetCollection::const_iterator irecojet = recoJets->begin();
-  int trial=0;
-  for(; irecojet!=recoJets->end();irecojet++){
-    trial++;
-    //cout<<"trial: "<<trial<<endl;
 
-    //match the reco jet with hlt jet by deltaR and get iterator
-    float eta1 = irecojet->eta();
-    float phi1 = irecojet->phi();
+  //read in top jets
+  edm::Handle<reco::BasicJetCollection> recoTopJets;
+  iEvent.getByLabel(OfflineTopjetColl, recoTopJets);
+  edm::Handle<reco::BasicJetCollection> hltTopJets;
+  iEvent.getByLabel(OnlineTopjetColl, hltTopJets);
+  std::auto_ptr<reco::BasicJetCollection > hltTopJetColl( new reco::BasicJetCollection (*hltTopJets));
 
-    size_t iter=0;
-    float mindR=1000;
-    size_t itemp=0;
-    for(reco::BasicJetCollection::const_iterator i=hltJets->begin(); i!=hltJets->end();i++){
-      //    cout<<"looping over "<<i<<"th jet"<<endl;
-      float eta2 = i->eta();
-      float phi2 = i->phi();
-      
-      float dR = pow( pow(eta1-eta2,2) + pow(phi1-phi2,2), 0.5);
-      if(dR<mindR){
-	mindR=dR;
-	iter=itemp;
-      }
-      itemp+=1;
-    }  
+  //read in WZ jets
+  edm::Handle<reco::BasicJetCollection> recoWZJets;
+  iEvent.getByLabel(OfflineWZjetColl, recoWZJets);
+  edm::Handle<reco::BasicJetCollection> hltWZJets;
+  iEvent.getByLabel(OnlineWZjetColl, hltWZJets);
+  std::auto_ptr<reco::BasicJetCollection > hltWZJetColl( new reco::BasicJetCollection (*hltWZJets));
+
+  //read in Trim jets
+  edm::Handle<reco::BasicJetCollection> hltTrimJets;
+  iEvent.getByLabel(OnlineTrimjetColl, hltTrimJets);
+  std::auto_ptr<reco::BasicJetCollection > hltTrimJetColl( new reco::BasicJetCollection (*hltTrimJets));
+
+
+  //now sort them by pT, let's use recojets to sort since they should have slightly better pT values
+  sort ( recoTopJets.begin(), recoTopJets.end(), GreaterByPtCandPtrUser() );
+
+  //and get the highest pT jet
+  reco::BasicJetCollection::const_iterator irecoTopjet = recoTopJets->begin();
+
+  //match the reco jet with hlt jet by deltaR and get iterator
+  float eta1 = irecoTopjet->eta();
+  float phi1 = irecoTopjet->phi();
   
-    if(mindR>1) continue;
-    //cout<<"Got iterator and it's: "<<iter<<" with dR of "<<mindR<<endl;
-    reco::BasicJetCollection::const_iterator ihltjet = hltJets->begin();
-    for(size_t i=0;i<iter;i++){
-      ihltjet++;
+  size_t iter=0;
+  float mindR=1000;
+  size_t itemp=0;
+
+  for(reco::BasicJetCollection::const_iterator i=hltTopJets->begin(); i!=hltTopJets->end();i++){
+    float eta2 = i->eta();
+    float phi2 = i->phi();
+    
+    float dR = pow( pow(eta1-eta2,2) + pow(phi1-phi2,2), 0.5);
+    if(dR<mindR){
+      mindR=dR;
+      iter=itemp;
     }
-    //fill deltaR hist
-    deltaRhist->Fill(mindR);
-    //cout<<"Got hltjet"<<endl;
-    //get jet masses;
-    float recomass = irecojet->mass();
-    float hltmass  = ihltjet->mass();
+    itemp+=1;
+  }  
+ 
+  //iterate to the correct hlt jet
+  reco::BasicJetCollection::const_iterator ihltTopjet = hltTopJets->begin();
+  for(size_t i=0;i<iter;i++){
+    ihltTopjet++;
+  }
+
+  /*Ok, I'm going to get the WZ and Trimmed jets here, but I'm going to get the jet that most
+   closely matches in deltaR the highest pT top jet. this is to avoid amibuities about having
+  different jets be the highest pT jet in different collections - now though I need to match
+  both offline and online WZ jets to the offline top jet....*/ 
+
+  //reset iteration variables
+  iter=0;
+  mindR=1000;
+  itemp=0;
+
+  for(reco::BasicJetCollection::const_iterator i=hltWZJets->begin(); i!=hltWZJets->end();i++){
+    float eta2 = i->eta();
+    float phi2 = i->phi();
+    
+    float dR = pow( pow(eta1-eta2,2) + pow(phi1-phi2,2), 0.5);
+    if(dR<mindR){
+      mindR=dR;
+      iter=itemp;
+    }
+    itemp+=1;
+  }  
+ 
+  //iterate to the correct hlt jet
+  reco::BasicJetCollection::const_iterator ihltWZjet = hltWZJets->begin();
+  for(size_t i=0;i<iter;i++){
+    ihltWZjet++;
+  }
+
+  //now trimmed jets
+  //reset iteration variables
+  iter=0;
+  mindR=1000;
+  itemp=0;
+
+  for(reco::BasicJetCollection::const_iterator i=hltTrimJets->begin(); i!=hltTrimJets->end();i++){
+    float eta2 = i->eta();
+    float phi2 = i->phi();
+    
+    float dR = pow( pow(eta1-eta2,2) + pow(phi1-phi2,2), 0.5);
+    if(dR<mindR){
+      mindR=dR;
+      iter=itemp;
+    }
+    itemp+=1;
+  }  
+ 
+  //iterate to the correct hlt jet
+  reco::BasicJetCollection::const_iterator ihltTrimjet = hltTrimJets->begin();
+  for(size_t i=0;i<iter;i++){
+    ihltTrimjet++;
+  }
+
+
+
+  
+  
+  //get jet masses;
+  float recomass = irecojet->mass();
+  float hltmass  = ihltjet->mass();
     recomasshist->Fill(recomass);
     hltmasshist->Fill(hltmass);
     ratiomasshist_nc->Fill(hltmass/recomass);
