@@ -53,8 +53,12 @@ from the trimmed jet producer
 using std::cout;
 using std::endl;
 
-
+//declare needed functions
 bool toptag(reco::Jet::Constituents subjets,float jetmass, double minTM, double maxTM, double minMM);
+bool WZtag(reco::Jet::Constituents subjets,float jetmass, double minWM, double maxWM, double mdc);
+
+float MinMass(reco::Jet::Constituents subjets);
+float MassDrop(float jetmass,reco::Jet::Constituents subjets);
 
 struct GreaterByPtCandPtrUser {
   bool operator()( const edm::Ptr<reco::Candidate> & t1, const edm::Ptr<reco::Candidate> & t2 ) const {
@@ -62,6 +66,7 @@ struct GreaterByPtCandPtrUser {
   }
 };
 
+//plugin declaration
 class hltTreeMaker : public edm::EDProducer {
   
 public:
@@ -394,6 +399,82 @@ bool toptag(reco::Jet::Constituents subjets,float jetmass, double minTM, double 
   }
   else return false;
 }
+
+
+
+bool wztag(reco::Jet::Constituents subjets,float jetmass,int mode, double minWM, double maxWM, double mdc){
+  //instantiate min mass
+  float massdrop = 99999.;
+
+ //find the mass drop first cut on number of subjets >=3
+    if(subjets.size()== 2){
+      // Take the highest 3 pt subjets for cuts
+      sort ( subjets.begin(), subjets.end(), GreaterByPtCandPtrUser() );
+      //get the highest pt subjet
+      reco::Jet::Constituent icandJet = subjets[0];
+
+      reco::Candidate::LorentzVector isubJet = icandJet->p4();
+      double imass = isubJet.mass();
+      massdrop=imass/jetmass;
+    }
+
+
+    if(subjets.size()==2 && jetmass>minWM && jetmass<maxWM){
+      if(massdrop<mdc) return true;
+      else return false;
+    }
+    else return false;
+}
+
+float MinMass(reco::Jet::Constituents subjets){
+  //instantiate min mass
+  float minmass = 99999.;
+
+  //find the mass drop first cut on number of subjets >=3
+  if(subjets.size()>= 3){
+    // Take the highest 3 pt subjets for cuts
+    sort ( subjets.begin(), subjets.end(), GreaterByPtCandPtrUser() );
+    // Now look at the subjets that were formed
+    for(int isub=0; isub<subjets.size(); ++isub){
+      // Get this subjet
+      reco::Jet::Constituent icandJet = subjets[isub];
+      // Now look at the "other" subjets than this one, form the minimum invariant mass pairing
+      for ( int jsub = isub + 1; jsub < 3; ++jsub ) {
+	// Get the second subjet
+	reco::Jet::Constituent jcandJet = subjets[jsub];
+	//Combine the 4 vectors
+	reco::Candidate::LorentzVector Cand = icandJet->p4() + jcandJet->p4();
+	// Find the minimum mass pairing. 
+	if ( fabs( Cand.mass() ) < minmass ) {
+	  minmass = Cand.mass();
+	  }  
+      }// end second loop over subjets
+    }// end first loop over subjets
+  }// endif 3 subjets
+  
+  return minmass;
+}
+
+
+float MassDrop(float jetmass,reco::Jet::Constituents subjets);{
+  //instantiate min mass
+  float massdrop = 99999.;
+
+ //find the mass drop first cut on number of subjets >=3
+    if(subjets.size()== 2){
+      // Take the highest 3 pt subjets for cuts
+      sort ( subjets.begin(), subjets.end(), GreaterByPtCandPtrUser() );
+      //get the highest pt subjet
+      reco::Jet::Constituent icandJet = subjets[0];
+
+      reco::Candidate::LorentzVector isubJet = icandJet->p4();
+      double imass = isubJet.mass();
+      massdrop=imass/jetmass;
+    }
+
+    return massdrop;
+}
+
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(hltTreeMaker);
