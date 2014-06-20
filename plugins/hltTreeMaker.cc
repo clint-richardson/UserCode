@@ -318,12 +318,47 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
   reco::Jet::Constituents hltWZsubjets = ihltWZjet->getJetConstituents();
   reco::Jet::Constituents hltTrimsubjets = ihltTrimjet->getJetConstituents();
 
-  bool recoTopPass = toptag(recosubjets,recomass,minTopMass,maxTopMass,minMinMass);
-  bool hltTopPass = toptag(hltsubjets,hltmass,minTopMass,maxTopMass,minMinMass);
+  std::auto_ptr<std::vector<bool> > recoTopPass;
+  recoTopPass->push_back(toptag(recosubjets,recomass,minTopMass,maxTopMass,minMinMass));
+  std::auto_ptr<std::vector<bool> > hltTopPass;
+  hltTopPass->push_back(toptag(hltsubjets,hltmass,minTopMass,maxTopMass,minMinMass));
 
-  bool recoWZPass = WZtag(recosubjets,recomass,recosjhist,recommhist_nc,recommhist_c,minWZMass,maxWZMass,minMinMass);
-  bool hltWZPass = WZtag(hltsubjets,hltmass,hltsjhist,hltmmhist_nc,hltmmhist_c,minWZMass,maxWZMass,minMinMass);
+  std::auto_ptr<std::vector<bool> > recoWZPass;
+  recoWZPass->push_back(WZtag(recosubjets,recomass,minWZMass,maxWZMass,MassDropCut));
+  std::auto_ptr<std::vector<bool> > hltWZPass;
+  hltWZPass->push_back(WZtag(hltsubjets,hltmass,minWZMass,maxWZMass,MassDropCut));
 
+  std::auto_ptr<std::vector<float> > hltMinMass;
+  hltMinMass->push_back(MinMass(hltTopMass,hltTopsubjets));
+  std::auto_ptr<std::vector<float> > recoMinMass;
+  recoMinMass->push_back(MinMass(recoTopMass,recoTopsubjets));
+  std::auto_ptr<std::vector<float> > hltMassDrop;
+  hltMassDrop->push_back(MassDrop(hltWZsubjets));  
+  std::auto_ptr<std::vector<float> > recoMassDrop;
+  recoMassDrop->push_back(MassDrop(recoWZsubjets));
+
+  std::auto_ptr<std::vector<int> > N_hltTopsubjets;
+  N_hltTopsubjets->push_back( hltTopsubjets.size());
+  std::auto_ptr<std::vector<int> > N_recoTopsubjets;
+  N_recoTopsubjets->push_back(recoTopsubjets.size());
+  std::auto_ptr<std::vector<int> > N_hltWZsubjets;
+  N_hltWZsubjets->push_back(hltWZsubjets.size());
+  std::auto_ptr<std::vector<int> > N_recoWZsubjets;
+  N_recoWZsubjets->push_back(recoWZsubjets.size());
+
+  std::auto_ptr<std::vector<int> > N_hltTrimsubjets;
+  N_hltTrimsubjets->push_back(hltTrimsubjets.size());
+
+  std::auto_ptr<std::vector<float> > hltTopPT;
+  hltTopPT->push_back(ihltTopjet->pt());
+  std::auto_ptr<std::vector<float> > recoTopPT;
+  recoTopPT->push_back( irecoTopjet->pt());
+  std::auto_ptr<std::vector<float> > hltWZPT;
+  hltWZPT->push_back(ihltWZjet->pt());
+  std::auto_ptr<std::vector<float> > recoWZPT;
+  recoWZPT->push_back(irecoWZjet->pt());
+  std::auto_ptr<std::vector<float> > hltTrimPT;
+  hltTrimPT->push_back(irecoTrimjet->pt());
   
 }    
 
