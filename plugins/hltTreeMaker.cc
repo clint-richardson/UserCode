@@ -52,11 +52,11 @@ from the trimmed jet producer
 using namespace std;
 
 //declare needed functions
-int toptag(reco::Jet::Constituents subjets,float jetmass, double minTM, double maxTM, double minMM);
+int Toptag(reco::Jet::Constituents subjets,float jetmass, double minTM, double maxTM, double minMM);
 int WZtag(reco::Jet::Constituents subjets,float jetmass, double minWM, double maxWM, double mdc);
 
-float MinMass(reco::Jet::Constituents subjets);
-float MassDrop(float jetmass,reco::Jet::Constituents subjets);
+float minmass(reco::Jet::Constituents subjets);
+float massdrop(float jetmass,reco::Jet::Constituents subjets);
 
 
 struct GreaterByPtCandPtrUser {
@@ -99,6 +99,37 @@ private:
   double maxWZMass;
   double MassDropCut;
 
+  TTree* tree;
+
+  //all the tree variables
+  float hltTopJetMass_;
+  float recoTopJetMass_;
+  float hltWZJetMass_;
+  float recoWZJetMass_;
+  float hltTrimJetMass_;
+  
+  float hltTopPT_;
+  float recoTopPT_;
+  float hltWZPT_;
+  float recoWZPT_;
+  float hltTrimPT_;
+
+  float hltMinMass_;
+  float recoMinMass_;
+  float hltMassDrop_;
+  float recoMassDrop_;
+
+  int NhltTopSubjets_;
+  int NrecoTopSubjets_;
+  int NhltWZSubjets_;
+  int NrecoWZSubjets_;
+  int NhltTrimSubjets_;
+
+  int hltTopPass_;
+  int recoTopPass_;
+  int hltWZPass_;
+  int recoWZPass_;
+
 };
 
 hltTreeMaker::hltTreeMaker(const edm::ParameterSet& Pset){
@@ -136,37 +167,33 @@ hltTreeMaker::hltTreeMaker(const edm::ParameterSet& Pset){
 
 
   //set branch aliases
+  edm::Service<TFileService> fs;
+  tree = fs->make<TTree>("JetVariables", "JetVariables");
 
-  //top jet variables first
-  produces<std::vector<float> >( "hltTopJetMass" ).setBranchAlias( "hltTopJetMass" );
-  produces<std::vector<float> >( "recoTopJetMass" ).setBranchAlias( "recoTopJetMass" );
-  produces<std::vector<float> >( "hltTopPT" ).setBranchAlias( "hltTopPT" );
-  produces<std::vector<float> >( "recoTopPT" ).setBranchAlias( "recoTopPT" );
-  produces<std::vector<int> >( "N_hltTopSubjets" ).setBranchAlias( "N_hltTopSubjets" );
-  produces<std::vector<int> >( "N_recoTopSubjets" ).setBranchAlias( "N_recoTopSubjets" );
-  produces<std::vector<int> >( "hltTopPass" ).setBranchAlias( "hltTopPass" );
-  produces<std::vector<int> >( "recoTopPass" ).setBranchAlias( "recoTopPass" );
-  produces<std::vector<float> >("hltMinMass").setBranchAlias( "hltMinMass");
-  produces<std::vector<float> >("recoMinMass").setBranchAlias( "recoMinMass");
+  tree->Branch("hltTopJetMass", &hltTopJetMass_,"hltTopJetMass/F");
+  tree->Branch("recoTopJetMass",&recoTopJetMass_,"recoTopJetMass/F");
+  tree->Branch("hltTopPT",&hltTopPT_,"hltTopPT/F");
+  tree->Branch("recoTopPT",&recoTopPT_,"recoTopPT/F");
+  tree->Branch("NhltTopSubjets",&NhltTopSubjets_,"NhltTopSubjets/i");
+  tree->Branch("NrecoTopSubjets",&NrecoTopSubjets_,"NrecoTopSubjets/i");
+  tree->Branch("hltTopPass",&hltTopPass_,"hltTopPass/i");
+  tree->Branch("recoTopPass",&recoTopPass_,"recoTopPass/i");
+  tree->Branch("hltMinMass",&hltMinMass_,"hltMinMass/F");
+  tree->Branch("recoMinMass",&recoMinMass_,"recoMinMass/F");
+  tree->Branch("hltWZJetMass",&hltWZJetMass_,"hltWZJetMass/F");
+  tree->Branch("recoWZJetMass",&recoWZJetMass_,"recoWZJetMass/F");
+  tree->Branch("hltWZPT",&hltWZPT_,"hltWZPT/F");
+  tree->Branch("recoWZPT",&recoWZPT_,"recoWZPT/F");
+  tree->Branch("NhltWZSubjets",&NhltWZSubjets_,"NhltWZSubjets/i");
+  tree->Branch("NrecoWZSubjets",&NrecoWZSubjets_,"NrecoWZSubjets/i");
+  tree->Branch("hltWZPass",&hltWZPass_,"hltWZPass/i");
+  tree->Branch("recoWZPass",&recoWZPass_,"recoWZPass/i");
+  tree->Branch("hltMassDrop",&hltMassDrop_,"hltMassDrop/F");
+  tree->Branch("recoMassDrop",&recoMassDrop_,"recoMassDrop/F");
+  tree->Branch("hltTrimJetMass",&hltTrimJetMass_,"hltTrimJetMass/F");
+  tree->Branch("hltTrimPT",&hltTrimPT_,"hltTrimPT/F");
+  tree->Branch("NhltTrimSubjets",NhltTrimSubjets_,"NhltTrimSubjets/i");
 
-  //now wz jet variables
-  produces<std::vector<float> >( "hltWZJetMass" ).setBranchAlias( "hltWZJetMass" );
-  produces<std::vector<float> >( "recoWZJetMass" ).setBranchAlias( "recoWZJetMass" );
-  produces<std::vector<float> >( "hltWZPT" ).setBranchAlias( "hltWZPT" );
-  produces<std::vector<float> >( "recoWZPT" ).setBranchAlias( "recoWZPT" );
-  produces<std::vector<int> >( "N_hltWZSubjets" ).setBranchAlias( "N_hltWZSubjets" );
-  produces<std::vector<int> >( "N_recoWZSubjets" ).setBranchAlias( "N_recoWZSubjets" );
-  produces<std::vector<int> >( "hltWZPass" ).setBranchAlias( "hltWZPass" );
-  produces<std::vector<int> >( "recoWZPass" ).setBranchAlias( "recoWZPass" );
-  produces<std::vector<float> >("hltMassDrop").setBranchAlias( "hltMassDrop");
-  produces<std::vector<float> >("recoMassDrop").setBranchAlias( "recoMassDrop");
-
-
-  //now trimmed jet variables
-  produces<std::vector<float> >( "hltTrimJetMass" ).setBranchAlias( "hltTrimJetMass" );
-  produces<std::vector<float> >( "recoTrimJetMass" ).setBranchAlias( "recoTrimJetMass" );
-  produces<std::vector<float> >( "hltTrimPT" ).setBranchAlias( "hltTrimPT" );
-  produces<std::vector<int> >( "N_hltTrimSubjets" ).setBranchAlias( "N_hltTrimSubjets" );
 
   /*note that I'm not including a trim pass since we want to investigate moving this
   variable around anyway and it's easy enough to plot things with cuts using trees
@@ -199,6 +226,7 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
   edm::Handle<reco::BasicJetCollection> hltTrimJets;
   iEvent.getByLabel(OnlineTrimjetColl, hltTrimJets);
   std::auto_ptr<reco::BasicJetCollection > hltTrimJetColl( new reco::BasicJetCollection (*hltTrimJets));
+  
 
 
   //get the higest pt jet
@@ -217,7 +245,7 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
   //match the reco jet with hlt jet by deltaR and get iterator
   float eta1 = irecoTopjet->eta();
   float phi1 = irecoTopjet->phi();
-  
+
   size_t iter=0;
   float mindR=1000;
   size_t itemp=0;
@@ -239,6 +267,7 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
   for(size_t i=0;i<iter;i++){
     ihltTopjet++;
   }
+
 
   /*Ok, I'm going to get the WZ and Trimmed jets here, but I'm going to get the jet that most
    closely matches in deltaR the highest pT top jet. this is to avoid amibuities about having
@@ -269,6 +298,7 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
   }
 
 
+
   //WZ offline jets
   //reset iteration variables
   iter=0;
@@ -296,6 +326,7 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
   }
 
 
+
   //now trimmed jets
   //reset iteration variables
   iter=0;
@@ -321,6 +352,7 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
   }
 
 
+
   /*now I should have 5 jets:
    *ihltTopjet
    *irecoTopjet
@@ -331,17 +363,11 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
   
   
   //get jet masses;
-  std::auto_ptr<std::vector<float> > recotopmass;
-  recotopmass->push_back(irecoTopjet->mass());
-  std::auto_ptr<std::vector<float> > hlttopmass;
-  hlttopmass->push_back( ihltTopjet->mass());
-  std::auto_ptr<std::vector<float> > hltwzmass;
-  hltwzmass->push_back(ihltWZjet->mass());
-  std::auto_ptr<std::vector<float> > recowzmass;
-  recowzmass->push_back(irecoWZjet->mass());
-  std::auto_ptr<std::vector<float> > hlttrimmass;
-  hlttrimmass->push_back( ihltTrimjet->mass());
-
+  recoTopJetMass_ =irecoTopjet->mass();
+  hltTopJetMass_ =ihltTopjet->mass();
+  hltWZJetMass_ = ihltWZjet->mass();
+  recoWZJetMass_ = irecoWZjet->mass();
+  hltTrimJetMass_ = ihltTrimjet->mass();
 
   //get the subjets
   reco::Jet::Constituents recoTopsubjets = irecoTopjet->getJetConstituents();
@@ -350,82 +376,37 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
   reco::Jet::Constituents hltWZsubjets = ihltWZjet->getJetConstituents();
   reco::Jet::Constituents hltTrimsubjets = ihltTrimjet->getJetConstituents();
 
-  std::auto_ptr<std::vector<int> > recotoppass;
-  recotoppass->push_back(toptag(recoTopsubjets,irecoTopjet->mass(),minTopMass,maxTopMass,minMinMass));
-  std::auto_ptr<std::vector<int> > hlttoppass;
-  hlttoppass->push_back(toptag(hltTopsubjets,ihltTopjet->mass(),minTopMass,maxTopMass,minMinMass));
 
-  std::auto_ptr<std::vector<int> > recowzpass;
-  recowzpass->push_back(WZtag(recoWZsubjets,irecoWZjet->mass(),minWZMass,maxWZMass,MassDropCut));
-  std::auto_ptr<std::vector<int> > hltwzpass;
-  hltwzpass->push_back(WZtag(hltWZsubjets,ihltWZjet->mass(),minWZMass,maxWZMass,MassDropCut));
 
-  std::auto_ptr<std::vector<float> > hltminmass;
-  hltminmass->push_back(MinMass(hltTopsubjets));
-  std::auto_ptr<std::vector<float> > recominmass;
-  recominmass->push_back(MinMass(recoTopsubjets));
-  std::auto_ptr<std::vector<float> > hltmassdrop;
-  hltmassdrop->push_back(MassDrop(ihltWZjet->mass(),hltWZsubjets));  
-  std::auto_ptr<std::vector<float> > recomassdrop;
-  recomassdrop->push_back(MassDrop(irecoWZjet->mass(),recoWZsubjets));
+  recoTopPass_ =  Toptag(recoTopsubjets,irecoTopjet->mass(),minTopMass,maxTopMass,minMinMass);
+  hltTopPass_ = Toptag(hltTopsubjets,ihltTopjet->mass(),minTopMass,maxTopMass,minMinMass);
+  recoWZPass_ = WZtag(recoWZsubjets,irecoWZjet->mass(),minWZMass,maxWZMass,MassDropCut); 
+  hltWZPass_ = WZtag(hltWZsubjets,ihltWZjet->mass(),minWZMass,maxWZMass,MassDropCut);
 
-  std::auto_ptr<std::vector<int> > N_hlttopsubjets;
-  N_hlttopsubjets->push_back( hltTopsubjets.size());
-  std::auto_ptr<std::vector<int> > N_recotopsubjets;
-  N_recotopsubjets->push_back(recoTopsubjets.size());
-  std::auto_ptr<std::vector<int> > N_hltwzsubjets;
-  N_hltwzsubjets->push_back(hltWZsubjets.size());
-  std::auto_ptr<std::vector<int> > N_recowzsubjets;
-  N_recowzsubjets->push_back(recoWZsubjets.size());
 
-  std::auto_ptr<std::vector<int> > N_hlttrimsubjets;
-  N_hlttrimsubjets->push_back(hltTrimsubjets.size());
+  hltMinMass_ = minmass(hltTopsubjets);
+  recoMinMass_ =minmass(recoTopsubjets);
+  hltMassDrop_ = massdrop(ihltWZjet->mass(),hltWZsubjets);  
+  recoMassDrop_ = massdrop(irecoWZjet->mass(),recoWZsubjets);
 
-  std::auto_ptr<std::vector<float> > hlttopPT;
-  hlttopPT->push_back(ihltTopjet->pt());
-  std::auto_ptr<std::vector<float> > recotopPT;
-  recotopPT->push_back( irecoTopjet->pt());
-  std::auto_ptr<std::vector<float> > hltwzPT;
-  hltwzPT->push_back(ihltWZjet->pt());
-  std::auto_ptr<std::vector<float> > recowzPT;
-  recowzPT->push_back(irecoWZjet->pt());
-  std::auto_ptr<std::vector<float> > hlttrimPT;
-  hlttrimPT->push_back(ihltTrimjet->pt());
+  NhltTopSubjets_ = hltTopsubjets.size();  
+  NrecoTopSubjets_ = recoTopsubjets.size();
+  NhltWZSubjets_ = hltWZsubjets.size();
+  NrecoWZSubjets_ = recoWZsubjets.size();
+  NhltTrimSubjets_ = hltTrimsubjets.size();
 
-  //put pt info in event
-  iEvent.put(hlttopPT, "hltTopPT");
-  iEvent.put(recotopPT, "recoTopPT");
-  iEvent.put(hltwzPT, "hltWZPT");
-  iEvent.put(recowzPT, "recoWZPT");
-  iEvent.put(hlttrimPT, "hltTrimPT");
-  //put n subjets in event
-  iEvent.put(N_hlttopsubjets,"N_hltTopsubjets");
-  iEvent.put(N_recotopsubjets,"N_recoTopsubjets");
-  iEvent.put(N_hltwzsubjets,"N_hltWZsubjets");
-  iEvent.put(N_recowzsubjets,"N_recoWZsubjets");
-  iEvent.put(N_hlttrimsubjets, "N_hltTrimSubjets");
-  //put jet masses in event
-  iEvent.put(hlttopmass, "hltTopmass");
-  iEvent.put(recotopmass,"recoTopmass");
-  iEvent.put(hltwzmass, "hltWZmass");
-  iEvent.put(recowzmass,"recoWZmass");
-  iEvent.put(hlttrimmass,"hltTrimmass");
-  //put the min masses in event
-  iEvent.put(hltminmass,"hltMinMass");
-  iEvent.put(recominmass,"recoMinMass");
-  //put the mass drops in event
-  iEvent.put(hltmassdrop,"hltMassDrop");
-  iEvent.put(recomassdrop,"recoMassDrop");
-  //put the tagging decisions in event
-  iEvent.put(hlttoppass,"hltTopPass");
-  iEvent.put(recotoppass,"recoTopPass");
-  iEvent.put(hltwzpass,"hltWZPass");
-  iEvent.put(recowzpass,"recoWZPass");
+  hltTopPT_ = ihltTopjet->pt();
+  recoTopPT_ = irecoTopjet->pt();
+  hltWZPT_ = ihltWZjet->pt();
+  recoWZPT_ = irecoWZjet->pt();
+  hltTrimPT_ = ihltTrimjet->pt();
 
+  //fill the tree
+  tree->Fill();
   
 }    
 
-int toptag(reco::Jet::Constituents subjets,float jetmass, double minTM, double maxTM, double minMM){
+int Toptag(reco::Jet::Constituents subjets,float jetmass, double minTM, double maxTM, double minMM){
   //instantiate min mass
   float minmass = 99999.;
 
@@ -484,7 +465,7 @@ int WZtag(reco::Jet::Constituents subjets,float jetmass, double minWM, double ma
     else return 0;
 }
 
-float MinMass(reco::Jet::Constituents subjets){
+float minmass(reco::Jet::Constituents subjets){
   //instantiate min mass
   float minmass = 99999.;
 
@@ -514,7 +495,7 @@ float MinMass(reco::Jet::Constituents subjets){
 }
 
 
-float MassDrop(float jetmass,reco::Jet::Constituents subjets){
+float massdrop(float jetmass,reco::Jet::Constituents subjets){
   //instantiate min mass
   float massdrop = 99999.;
 
