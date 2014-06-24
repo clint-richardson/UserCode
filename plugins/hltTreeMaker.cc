@@ -90,6 +90,7 @@ private:
 
 
   edm::InputTag  OnlineTrimjetColl;
+  //  edm::InputTag  OnlineCA8jetColl;
 
   double minTopMass;
   double maxTopMass;
@@ -107,12 +108,15 @@ private:
   float hltWZJetMass_;
   float recoWZJetMass_;
   float hltTrimJetMass_;
+  //  float hltCA8JetMass_;
+
   
   float hltTopPT_;
   float recoTopPT_;
   float hltWZPT_;
   float recoWZPT_;
   float hltTrimPT_;
+  // float hltCA8PT_;
 
   float hltMinMass_;
   float recoMinMass_;
@@ -148,6 +152,10 @@ hltTreeMaker::hltTreeMaker(const edm::ParameterSet& Pset){
 
   if (Pset.exists("OnlineTrimjetCollection")) OnlineTrimjetColl = Pset.getParameter<edm::InputTag>("OnlineTrimjetCollection");
   else                              OnlineTrimjetColl = edm::InputTag("hltCA8TopJets");
+
+  /*  if (Pset.exists("OnlineCA8jetCollection")) OnlineTrimjetColl = Pset.getParameter<edm::InputTag>("OnlineCA8jetCollection");
+  else                              OnlineTrimjetColl = edm::InputTag("hltCambridgeAachen8PFJets");
+  */
   
   if (Pset.exists("minTopMass")) minTopMass = Pset.getParameter<double>("minTopMass");
   else                              minTopMass = 140;
@@ -192,9 +200,10 @@ hltTreeMaker::hltTreeMaker(const edm::ParameterSet& Pset){
   tree->Branch("recoMassDrop",&recoMassDrop_,"recoMassDrop/F");
   tree->Branch("hltTrimJetMass",&hltTrimJetMass_,"hltTrimJetMass/F");
   tree->Branch("hltTrimPT",&hltTrimPT_,"hltTrimPT/F");
-  tree->Branch("NhltTrimSubjets",NhltTrimSubjets_,"NhltTrimSubjets/i");
-
-
+  tree->Branch("NhltTrimSubjets",&NhltTrimSubjets_,"NhltTrimSubjets/i");
+  /*tree->Branch("hltCA8JetMass",&hltCA8JetMass_,"hltCA8JetMass/F");
+  tree->Branch("hltCA8PT",&hltCA8PT_,"hltCA8PT/F");
+  */
   /*note that I'm not including a trim pass since we want to investigate moving this
   variable around anyway and it's easy enough to plot things with cuts using trees
   I am including hlt top and wz pass since those are more fixed cuts right now though
@@ -226,30 +235,36 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
   edm::Handle<reco::BasicJetCollection> hltTrimJets;
   iEvent.getByLabel(OnlineTrimjetColl, hltTrimJets);
   std::auto_ptr<reco::BasicJetCollection > hltTrimJetColl( new reco::BasicJetCollection (*hltTrimJets));
+
+  /*  //read in Trim jets
+  edm::Handle<reco::BasicJetCollection> hltCA8Jets;
+  iEvent.getByLabel(OnlineCA8jetColl, hltCA8Jets);
+  std::auto_ptr<reco::BasicJetCollection > hltCA8JetColl( new reco::BasicJetCollection (*hltCA8Jets));
+  */
+
   
+  reco::BasicJetCollection::const_iterator irecoTopjet;
 
+  //sort the top jets by pt
+  float dummyPT=0;
 
-  //get the higest pt jet
-  reco::BasicJetCollection::const_iterator irecoTopjet = recoTopJets->begin();
-  for(reco::BasicJetCollection::const_iterator dummyjet=recoTopJets->begin(); dummyjet!=recoTopJets->end();dummyjet++){
-
-    if(dummyjet->pt()>irecoTopjet->pt()){
-      irecoTopjet=dummyjet;
+  for(reco::BasicJetCollection::const_iterator i=recoTopJets->begin(); i!=recoTopJets->end();i++){
+    if(i->pt()>dummyPT){
+      dummyPT=i->pt();
+      irecoTopjet=i;
     }
 
   }
-
-  
 
 
   //match the reco jet with hlt jet by deltaR and get iterator
   float eta1 = irecoTopjet->eta();
   float phi1 = irecoTopjet->phi();
-
+  
   size_t iter=0;
   float mindR=1000;
   size_t itemp=0;
-
+  
   for(reco::BasicJetCollection::const_iterator i=hltTopJets->begin(); i!=hltTopJets->end();i++){
     float eta2 = i->eta();
     float phi2 = i->phi();
@@ -261,24 +276,24 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
     }
     itemp+=1;
   }  
- 
+  
   //iterate to the correct hlt jet
   reco::BasicJetCollection::const_iterator ihltTopjet = hltTopJets->begin();
   for(size_t i=0;i<iter;i++){
     ihltTopjet++;
   }
-
-
+  
+  
   /*Ok, I'm going to get the WZ and Trimmed jets here, but I'm going to get the jet that most
-   closely matches in deltaR the highest pT top jet. this is to avoid amibuities about having
-  different jets be the highest pT jet in different collections - now though I need to match
-  both offline and online WZ jets to the offline top jet....*/ 
-
+    closely matches in deltaR the highest pT top jet. this is to avoid amibuities about having
+    different jets be the highest pT jet in different collections - now though I need to match
+    both offline and online WZ jets to the offline top jet....*/ 
+  
   //reset iteration variables
   iter=0;
   mindR=1000;
   itemp=0;
-
+  
   for(reco::BasicJetCollection::const_iterator i=hltWZJets->begin(); i!=hltWZJets->end();i++){
     float eta2 = i->eta();
     float phi2 = i->phi();
@@ -290,22 +305,22 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
     }
     itemp+=1;
   }  
- 
+  
   //iterate to the correct hlt jet
   reco::BasicJetCollection::const_iterator ihltWZjet = hltWZJets->begin();
   for(size_t i=0;i<iter;i++){
     ihltWZjet++;
   }
-
-
-
+  
+  
+  
   //WZ offline jets
   //reset iteration variables
   iter=0;
   mindR=1000;
   itemp=0;
-
-
+  
+  
   for(reco::BasicJetCollection::const_iterator i=recoWZJets->begin(); i!=recoWZJets->end();i++){
     float eta2 = i->eta();
     float phi2 = i->phi();
@@ -317,22 +332,22 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
     }
     itemp+=1;
   }  
-
-
+  
+  
   //iterate to the correct reco jet
   reco::BasicJetCollection::const_iterator irecoWZjet = recoWZJets->begin();
   for(size_t i=0;i<iter;i++){
     irecoWZjet++;
   }
-
-
-
+  
+  
+  
   //now trimmed jets
   //reset iteration variables
   iter=0;
   mindR=1000;
   itemp=0;
-
+  
   for(reco::BasicJetCollection::const_iterator i=hltTrimJets->begin(); i!=hltTrimJets->end();i++){
     float eta2 = i->eta();
     float phi2 = i->phi();
@@ -344,63 +359,119 @@ void hltTreeMaker::produce(edm::Event& iEvent,const edm::EventSetup& iEventSetup
     }
     itemp+=1;
   }  
- 
+  
   //iterate to the correct hlt jet
   reco::BasicJetCollection::const_iterator ihltTrimjet = hltTrimJets->begin();
   for(size_t i=0;i<iter;i++){
     ihltTrimjet++;
   }
-
-
-
-  /*now I should have 5 jets:
+  /*
+  //now CA8 ungroomed jets
+  //reset iteration variables
+  iter=0;
+  mindR=1000;
+  itemp=0;
+  
+  for(reco::BasicJetCollection::const_iterator i=hltCA8Jets->begin(); i!=hltCA8Jets->end();i++){
+    float eta2 = i->eta();
+    float phi2 = i->phi();
+    
+    float dR = pow( pow(eta1-eta2,2) + pow(phi1-phi2,2), 0.5);
+    if(dR<mindR){
+      mindR=dR;
+      iter=itemp;
+    }
+    itemp+=1;
+  }  
+  
+  //iterate to the correct hlt jet
+  reco::BasicJetCollection::const_iterator ihltCA8jet = hltCA8Jets->begin();
+  for(size_t i=0;i<iter;i++){
+    ihltCA8jet++;
+  }
+  */
+  
+  
+  /*now I should have 6 jets:
    *ihltTopjet
    *irecoTopjet
    *ihltWZjet
    *recoWZjet
    *ihltTrimjet
+   *ihltCA8jet
    */
   
-  
-  //get jet masses;
-  recoTopJetMass_ =irecoTopjet->mass();
-  hltTopJetMass_ =ihltTopjet->mass();
-  hltWZJetMass_ = ihltWZjet->mass();
-  recoWZJetMass_ = irecoWZjet->mass();
-  hltTrimJetMass_ = ihltTrimjet->mass();
+  if(recoTopJets->size()==0 || hltTopJets->size()==0 || recoWZJets->size()==0 || hltWZJets->size()==0 || hltTrimJets->size()==0){ //|| hltCA8Jets->size()==0){
+    recoTopJetMass_=-9999;
+    recoTopPass_=-1;
+    NrecoTopSubjets_=-1;
+    recoTopPT_=-9999;
+    recoMinMass_=-9999;
+    hltTopJetMass_=-9999;
+    hltTopPass_=-1;
+    NhltTopSubjets_=-1;
+    hltTopPT_=-9999;
+    hltMinMass_=-9999;
+    recoWZJetMass_=-9999;
+    recoWZPass_=-1;
+    NrecoWZSubjets_=-1;
+    recoWZPT_=-9999;
+    recoMassDrop_=9999;
+    hltWZJetMass_=-9999;
+    hltWZPass_=-1;
+    NhltWZSubjets_=-1;
+    hltWZPT_=-9999;
+    hltMassDrop_=9999;
+    hltTrimJetMass_=-9999;
+    hltTrimPT_=-9999;
+    NhltTrimSubjets_=-1;
+    //hltCA8JetMass_=-9999;
+    //hltCA8PT_=-9999;
+  }
+  else{
+       
+    //get jet masses;
+    recoTopJetMass_ =irecoTopjet->mass();
+    hltTopJetMass_ =ihltTopjet->mass();
+    hltWZJetMass_ = ihltWZjet->mass();
+    recoWZJetMass_ = irecoWZjet->mass();
+    hltTrimJetMass_ = ihltTrimjet->mass();
+    //hltCA8JetMass_ = ihltCA8jet->mass();
 
-  //get the subjets
-  reco::Jet::Constituents recoTopsubjets = irecoTopjet->getJetConstituents();
-  reco::Jet::Constituents hltTopsubjets = ihltTopjet->getJetConstituents();
-  reco::Jet::Constituents recoWZsubjets = irecoWZjet->getJetConstituents();
-  reco::Jet::Constituents hltWZsubjets = ihltWZjet->getJetConstituents();
-  reco::Jet::Constituents hltTrimsubjets = ihltTrimjet->getJetConstituents();
+    //get the subjets
+    reco::Jet::Constituents recoTopsubjets = irecoTopjet->getJetConstituents();
+    reco::Jet::Constituents hltTopsubjets = ihltTopjet->getJetConstituents();
+    reco::Jet::Constituents recoWZsubjets = irecoWZjet->getJetConstituents();
+    reco::Jet::Constituents hltWZsubjets = ihltWZjet->getJetConstituents();
+    reco::Jet::Constituents hltTrimsubjets = ihltTrimjet->getJetConstituents();
+     
+    
+    recoTopPass_ =  Toptag(recoTopsubjets,irecoTopjet->mass(),minTopMass,maxTopMass,minMinMass);
+    hltTopPass_ = Toptag(hltTopsubjets,ihltTopjet->mass(),minTopMass,maxTopMass,minMinMass);
+    recoWZPass_ = WZtag(recoWZsubjets,irecoWZjet->mass(),minWZMass,maxWZMass,MassDropCut); 
+    hltWZPass_ = WZtag(hltWZsubjets,ihltWZjet->mass(),minWZMass,maxWZMass,MassDropCut);
+    
+    
+    hltMinMass_ = minmass(hltTopsubjets);
+    recoMinMass_ =minmass(recoTopsubjets);
+    hltMassDrop_ = massdrop(ihltWZjet->mass(),hltWZsubjets);  
+    recoMassDrop_ = massdrop(irecoWZjet->mass(),recoWZsubjets);
+    
+    NhltTopSubjets_ = hltTopsubjets.size();  
+    NrecoTopSubjets_ = recoTopsubjets.size();
+    NhltWZSubjets_ = hltWZsubjets.size();
+    NrecoWZSubjets_ = recoWZsubjets.size();
+    NhltTrimSubjets_ = hltTrimsubjets.size();
+    
+    hltTopPT_ = ihltTopjet->pt();
+    recoTopPT_ = irecoTopjet->pt();
+    hltWZPT_ = ihltWZjet->pt();
+    recoWZPT_ = irecoWZjet->pt();
+    hltTrimPT_ = ihltTrimjet->pt();
+    //hltCA8PT_ = ihltCA8jet->pt();
 
-
-
-  recoTopPass_ =  Toptag(recoTopsubjets,irecoTopjet->mass(),minTopMass,maxTopMass,minMinMass);
-  hltTopPass_ = Toptag(hltTopsubjets,ihltTopjet->mass(),minTopMass,maxTopMass,minMinMass);
-  recoWZPass_ = WZtag(recoWZsubjets,irecoWZjet->mass(),minWZMass,maxWZMass,MassDropCut); 
-  hltWZPass_ = WZtag(hltWZsubjets,ihltWZjet->mass(),minWZMass,maxWZMass,MassDropCut);
-
-
-  hltMinMass_ = minmass(hltTopsubjets);
-  recoMinMass_ =minmass(recoTopsubjets);
-  hltMassDrop_ = massdrop(ihltWZjet->mass(),hltWZsubjets);  
-  recoMassDrop_ = massdrop(irecoWZjet->mass(),recoWZsubjets);
-
-  NhltTopSubjets_ = hltTopsubjets.size();  
-  NrecoTopSubjets_ = recoTopsubjets.size();
-  NhltWZSubjets_ = hltWZsubjets.size();
-  NrecoWZSubjets_ = recoWZsubjets.size();
-  NhltTrimSubjets_ = hltTrimsubjets.size();
-
-  hltTopPT_ = ihltTopjet->pt();
-  recoTopPT_ = irecoTopjet->pt();
-  hltWZPT_ = ihltWZjet->pt();
-  recoWZPT_ = irecoWZjet->pt();
-  hltTrimPT_ = ihltTrimjet->pt();
-
+  }
+    
   //fill the tree
   tree->Fill();
   
